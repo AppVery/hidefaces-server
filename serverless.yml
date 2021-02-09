@@ -35,12 +35,12 @@ provider:
     STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
 
 functions:
-  hello:
-    handler: src/lambdas/handler.hello
+  payment:
+    handler: src/lambdas/payment.handler
     events:
       - http:
-          path: hello
-          method: get
+          path: payment
+          method: post
           cors: true
 
 resources:
