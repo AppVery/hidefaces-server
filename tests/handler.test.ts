@@ -1,5 +1,5 @@
-import {APIGatewayEvent, Context} from "aws-lambda";
-import * as handler from "../handler";
+import { APIGatewayEvent, Context } from "aws-lambda";
+import * as handler from "../src/lambdas/handler";
 
 test("hello", async () => {
   const event = { body: "Test Body" } as APIGatewayEvent;

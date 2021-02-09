@@ -4,7 +4,12 @@
   "description": "A TypeScript starter for Serverless Framework",
   "main": "handler.js",
   "scripts": {
-    "test": "serverless-bundle test"
+    "local": "serverless offline start",
+    "deploy": "serverless deploy",
+    "test": "serverless-bundle test",
+    "test:watch": "serverless-bundle test --watchAll",
+    "test:cover": "serverless-bundle test --coverage --runInBand",
+    "test:integration": "serverless-bundle test --watch integration-tests/*  --env=node"
   },
   "author": "",
   "license": "MIT",
@@ -15,9 +20,21 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.64",
     "@types/jest": "^26.0.14",
+    "@types/node": "^14.14.25",
+    "@types/sharp": "^0.27.1",
     "serverless-bundle": "3.2.1",
     "serverless-dotenv-plugin": "^3.0.0",
     "serverless-offline": "^6.8.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.4.1",
+    "@aws-sdk/client-rekognition": "^3.4.1",
+    "@aws-sdk/client-s3": "^3.4.1",
+    "@aws-sdk/client-xray": "^3.4.1",
+    "@aws-sdk/s3-request-presigner": "^3.4.1",
+    "@aws-sdk/util-dynamodb": "^3.4.1",
+    "aws-xray-sdk": "^3.2.0",
+    "sharp": "^0.27.1",
+    "stripe": "^8.135.0"
+  }
 }

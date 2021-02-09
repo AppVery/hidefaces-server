@@ -1,32 +1,79 @@
-# NOTE: update this with your service name
 service: hidefaces-server
 
-# Create an optimized package for our functions 
+plugins:
+  - serverless-bundle
+  - serverless-offline
+  - serverless-dotenv-plugin
+
 package:
   individually: true
 
-plugins:
-  - serverless-bundle # Package our functions with Webpack
-  - serverless-offline
-  - serverless-dotenv-plugin # Load .env as environment variables
+custom:
+  AccountId: !Ref AWS::AccountId
+  bundle:
+    linting: true
+    sourcemaps: false
+  stage: ${opt:stage, self:provider.stage}
+  myProfile:
+    prod: hidefaces-prod
+    dev: hidefaces-dev
+  useDotenv: true
 
 provider:
   name: aws
   runtime: nodejs12.x
   stage: dev
-  region: us-east-1
-  # To load environment variables externally
-  # rename env.example to .env and uncomment
-  # the following line. Also, make sure to not
-  # commit your .env.
-  #
-  #environment:
-  #  SAMPLE_ENV_VAR: ${env:SAMPLE_ENV_VAR}
+  profile: ${self:custom.myProfile.${self:custom.stage}}
+  region: eu-west-1
+  apiGateway:
+    shouldStartNameWithService: true
+  tracing:
+    apiGateway: true
+    lambda: true
+  environment:
+    stage: ${self:custom.stage}
+    STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
 
 functions:
   hello:
-    handler: handler.hello
+    handler: src/lambdas/handler.hello
     events:
       - http:
           path: hello
           method: get
+          cors: true
+
+resources:
+  - Resources:
+      GatewayResponseDefault4XX:
+        Type: "AWS::ApiGateway::GatewayResponse"
+        Properties:
+          ResponseParameters:
+            gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+            gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+          ResponseType: DEFAULT_4XX
+          RestApiId:
+            Ref: "ApiGatewayRestApi"
+      GatewayResponseDefault5XX:
+        Type: "AWS::ApiGateway::GatewayResponse"
+        Properties:
+          ResponseParameters:
+            gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+            gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+          ResponseType: DEFAULT_5XX
+          RestApiId:
+            Ref: "ApiGatewayRestApi"
+  - Outputs:
+      ApiGatewayRestApiId:
+        Value:
+          Ref: ApiGatewayRestApi
+        Export:
+          Name: ${self:custom.stage}-ImageApiGatewayRestApiId
+
+      ApiGatewayRestApiRootResourceId:
+        Value:
+          Fn::GetAtt:
+            - ApiGatewayRestApi
+            - RootResourceId
+        Export:
+          Name: ${self:custom.stage}-ImageApiGatewayRestApiRootResourceId

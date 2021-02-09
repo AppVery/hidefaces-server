@@ -3,6 +3,15 @@
     "baseUrl": ".",
     "target": "es6",
     "sourceMap": true,
-    "moduleResolution": "node"
-  }
+    "moduleResolution": "node",
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules"]
 }
