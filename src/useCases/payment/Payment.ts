@@ -6,14 +6,29 @@ import {
   PutItemCommand,
   PutItemCommandInput,
 } from "@aws-sdk/client-dynamodb";
+import {
+  S3Client,
+  PutObjectCommand,
+  PutObjectCommandInput,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Stripe from "stripe";
 
 export class Payment implements UseCase<Request, Response> {
   private database: DynamoDBClient;
+  private s3: S3Client;
+  private getTempUrl: typeof getSignedUrl;
   private stripe: Stripe;
 
-  constructor(database: DynamoDBClient, stripe: Stripe) {
+  constructor(
+    database: DynamoDBClient,
+    s3: S3Client,
+    getTempUrl: typeof getSignedUrl,
+    stripe: Stripe
+  ) {
     this.database = database;
+    this.s3 = s3;
+    this.getTempUrl = getTempUrl;
     this.stripe = stripe;
   }
 
@@ -31,11 +46,21 @@ export class Payment implements UseCase<Request, Response> {
 
     const { id, zip } = resultMakePayment.value;
 
-    await this.saveOperation(id, email, extension, zip);
+    const resultSaveData = await this.saveOperation(id, email, extension, zip);
+
+    if (resultSaveData.isFailure) {
+      return Result.fail<Response>(resultSaveData.error, resultSaveData.code);
+    }
+
+    const resultTempUrl = await this.getTempUploadUrl(id, extension);
+
+    if (resultTempUrl.isFailure) {
+      return Result.fail<Response>(resultTempUrl.error, resultTempUrl.code);
+    }
 
     const response: Response = {
       id,
-      url: "https://.....",
+      url: resultTempUrl.value,
     };
 
     return Result.ok<Response>(response);
@@ -84,6 +109,25 @@ export class Payment implements UseCase<Request, Response> {
     } catch (error) {
       const { statusCode, message } = error;
       return Result.fail<void>(`Database status: ${message}`, statusCode);
+    }
+  }
+
+  private async getTempUploadUrl(
+    id: string,
+    extension: string
+  ): Promise<Result<string>> {
+    try {
+      const input: PutObjectCommandInput = {
+        Bucket: process.env.MAIN_BUCKET_NAME,
+        Key: `videos/${id}/original-${id}.${extension}`,
+      };
+      const url = await this.getTempUrl(this.s3, new PutObjectCommand(input), {
+        expiresIn: 60,
+      });
+      return Result.ok<string>(url);
+    } catch (error) {
+      const { statusCode, message } = error;
+      return Result.fail<any>(`Storage status: ${message}`, statusCode);
     }
   }
 }

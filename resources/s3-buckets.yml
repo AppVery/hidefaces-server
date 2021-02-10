@@ -3,3 +3,13 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: ${self:custom.prefix}-main
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - "*"
+            AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+            MaxAge: 3000

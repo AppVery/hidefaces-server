@@ -21,14 +21,17 @@ lambdaPolicyDynamoDBMain:
   Resource:
     - "Fn::GetAtt": [MainTable, Arn]
 
-lambdaPolicyS3Main:
+lambdaPolicyS3MainVideos:
   Effect: Allow
   Action:
     - S3:GetObject
     - S3:PutObject
     - S3:PutObjectAcl
   Resource:
-    - "Fn::GetAtt": [MainBucket, Arn]
+    Fn::Join:
+      - ""
+      - - Fn::GetAtt: [MainBucket, Arn]
+        - "/videos/*"
 
 lambdaPolicyXRay:
   Effect: Allow

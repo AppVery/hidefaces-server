@@ -1,5 +1,7 @@
 import { Payment } from "./Payment";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Stripe from "stripe";
 import * as dotenv from "dotenv";
 
@@ -13,5 +15,6 @@ const stripe = new Stripe(stripeKey, {
 });
 
 const awsDynamoDB = new DynamoDBClient({});
+const awsS3 = new S3Client({});
 
-export default new Payment(awsDynamoDB, stripe);
+export default new Payment(awsDynamoDB, awsS3, getSignedUrl, stripe);

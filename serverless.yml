@@ -28,7 +28,7 @@ provider:
     STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
   iamRoleStatements:
     - ${file(resources/common.yml):lambdaPolicyDynamoDBMain}
-    - ${file(resources/common.yml):lambdaPolicyS3Main}
+    - ${file(resources/common.yml):lambdaPolicyS3MainVideos}
     - ${file(resources/common.yml):lambdaPolicyXRay}
 
 functions:
