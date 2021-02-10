@@ -33,6 +33,13 @@ lambdaPolicyS3MainVideos:
       - - Fn::GetAtt: [MainBucket, Arn]
         - "/videos/*"
 
+lambdaPolicyStateMachineVideo:
+  Effect: "Allow"
+  Action:
+    - "states:StartExecution"
+  Resource:
+    - "Fn::GetAtt": [SMHideFacesOnVideo, Arn]
+
 lambdaPolicySES:
   Effect: Allow
   Action:

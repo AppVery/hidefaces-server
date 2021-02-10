@@ -119,7 +119,7 @@ export class Payment implements UseCase<Request, Response> {
     try {
       const input: PutObjectCommandInput = {
         Bucket: process.env.MAIN_BUCKET_NAME,
-        Key: `videos/${id}/original-${id}.${extension}`,
+        Key: `videos/source/${id}/source-${id}.${extension}`,
       };
       const url = await this.getTempUrl(this.s3, new PutObjectCommand(input), {
         expiresIn: 60,

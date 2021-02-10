@@ -27,9 +27,12 @@ provider:
     MAIN_TABLE_NAME: ${self:custom.prefix}-main
     MAIN_BUCKET_NAME: ${self:custom.prefix}-main
     STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
+    STATE_MACHINE_ARN:
+      Fn::GetAtt: [SMHideFacesOnVideo, Arn]
   iamRoleStatements:
     - ${file(resources/common.yml):lambdaPolicyDynamoDBMain}
     - ${file(resources/common.yml):lambdaPolicyS3MainVideos}
+    - ${file(resources/common.yml):lambdaPolicyStateMachineVideo}
     - ${file(resources/common.yml):lambdaPolicySES}
     - ${file(resources/common.yml):lambdaPolicyXRay}
 
@@ -41,6 +44,15 @@ functions:
           path: payment
           method: post
           cors: true
+  videoStateMachineTrigger:
+    handler: src/lambdas/videoUploaded.handler
+    events:
+      - s3:
+          bucket: ${self:custom.prefix}-main
+          event: s3:ObjectCreated:Put
+          rules:
+            - prefix: videos/source/
+          existing: true
   addSignup:
     handler: src/lambdas/stepFunctionLambdas/addSignup.handler
   getSignup:
@@ -51,14 +63,9 @@ functions:
 stepFunctions:
   validate: true
   stateMachines:
-    reminderEmail:
-      name: reminderEmail
-      events:
-        - http:
-            path: signup-with-reminders
-            method: POST
-            cors: true
-      definition: ${file(resources/step-functions.yml)}
+    SMHideFacesOnVideo:
+      id: SMHideFacesOnVideo
+      definition: ${file(resources/video-step-functions.yml)}
 
 resources:
   - ${file(resources/dynamodb-tables.yml)}
@@ -66,6 +73,10 @@ resources:
   - ${file(resources/api-gateway-errors.yml)}
 
   - Outputs:
+      SMHideFacesOnVideo:
+        Description: The ARN of the SMHideFacesOnVideo state machine
+        Value:
+          Ref: SMHideFacesOnVideo
       MainTableName:
         Description: Name of the MainTable
         Value:
