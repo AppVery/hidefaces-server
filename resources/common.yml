@@ -1,0 +1,38 @@
+custom:
+  AccountId: !Ref AWS::AccountId
+  bundle:
+    linting: true
+    sourcemaps: false
+  stage: ${opt:stage, self:provider.stage}
+  prefix: ${self:service}-${self:custom.stage}
+  myProfile:
+    prod: hidefaces-prod
+    dev: hidefaces-dev
+  useDotenv: true
+
+lambdaPolicyDynamoDBMain:
+  Effect: Allow
+  Action:
+    - dynamodb:Query
+    - dynamodb:GetItem
+    - dynamodb:PutItem
+    - dynamodb:UpdateItem
+    - dynamodb:DeleteItem
+  Resource:
+    - "Fn::GetAtt": [MainTable, Arn]
+
+lambdaPolicyS3Main:
+  Effect: Allow
+  Action:
+    - S3:GetObject
+    - S3:PutObject
+    - S3:PutObjectAcl
+  Resource:
+    - "Fn::GetAtt": [MainBucket, Arn]
+
+lambdaPolicyXRay:
+  Effect: Allow
+  Action:
+    - xray:PutTraceSegments
+    - xray:PutTelemetryRecords
+  Resource: "*"

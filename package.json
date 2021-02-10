@@ -1,7 +1,7 @@
 {
   "name": "hidefaces-server",
-  "version": "0.1.0",
-  "description": "A TypeScript starter for Serverless Framework",
+  "version": "1.0.0",
+  "description": "HideFaces Backend",
   "main": "handler.js",
   "scripts": {
     "local": "serverless offline start",
@@ -11,11 +11,11 @@
     "test:cover": "serverless-bundle test --coverage --runInBand",
     "test:integration": "serverless-bundle test --watch integration-tests/*  --env=node"
   },
-  "author": "",
+  "author": "Pablo Cianes",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AnomalyInnovations/serverless-typescript-starter.git"
+    "url": "https://github.com/AppVery/hidefaces-server"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.64",

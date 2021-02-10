@@ -8,16 +8,7 @@ plugins:
 package:
   individually: true
 
-custom:
-  AccountId: !Ref AWS::AccountId
-  bundle:
-    linting: true
-    sourcemaps: false
-  stage: ${opt:stage, self:provider.stage}
-  myProfile:
-    prod: hidefaces-prod
-    dev: hidefaces-dev
-  useDotenv: true
+custom: ${file(resources/common.yml):custom}
 
 provider:
   name: aws
@@ -31,8 +22,14 @@ provider:
     apiGateway: true
     lambda: true
   environment:
-    stage: ${self:custom.stage}
+    STAGE: ${self:custom.stage}
+    MAIN_TABLE_NAME: ${self:custom.prefix}-main
+    MAIN_BUCKET_NAME: ${self:custom.prefix}-main
     STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
+  iamRoleStatements:
+    - ${file(resources/common.yml):lambdaPolicyDynamoDBMain}
+    - ${file(resources/common.yml):lambdaPolicyS3Main}
+    - ${file(resources/common.yml):lambdaPolicyXRay}
 
 functions:
   payment:
@@ -44,36 +41,28 @@ functions:
           cors: true
 
 resources:
-  - Resources:
-      GatewayResponseDefault4XX:
-        Type: "AWS::ApiGateway::GatewayResponse"
-        Properties:
-          ResponseParameters:
-            gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
-            gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
-          ResponseType: DEFAULT_4XX
-          RestApiId:
-            Ref: "ApiGatewayRestApi"
-      GatewayResponseDefault5XX:
-        Type: "AWS::ApiGateway::GatewayResponse"
-        Properties:
-          ResponseParameters:
-            gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
-            gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
-          ResponseType: DEFAULT_5XX
-          RestApiId:
-            Ref: "ApiGatewayRestApi"
+  - ${file(resources/dynamodb-tables.yml)}
+  - ${file(resources/s3-buckets.yml)}
+  - ${file(resources/api-gateway-errors.yml)}
+
   - Outputs:
+      MainTableName:
+        Description: Name of the MainTable
+        Value:
+          Ref: MainTable
+      MainBucketName:
+        Description: Name of the MainBucketName
+        Value:
+          Ref: MainBucket
       ApiGatewayRestApiId:
         Value:
           Ref: ApiGatewayRestApi
         Export:
-          Name: ${self:custom.stage}-ImageApiGatewayRestApiId
-
+          Name: ${self:custom.prefix}-ApiGatewayRestApiId
       ApiGatewayRestApiRootResourceId:
         Value:
           Fn::GetAtt:
             - ApiGatewayRestApi
             - RootResourceId
         Export:
-          Name: ${self:custom.stage}-ImageApiGatewayRestApiRootResourceId
+          Name: ${self:custom.prefix}-ApiGatewayRestApiRootResourceId
