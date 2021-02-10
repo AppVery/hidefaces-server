@@ -33,6 +33,12 @@ lambdaPolicyS3MainVideos:
       - - Fn::GetAtt: [MainBucket, Arn]
         - "/videos/*"
 
+lambdaPolicySES:
+  Effect: Allow
+  Action:
+    - ses:*
+  Resource: "*"
+
 lambdaPolicyXRay:
   Effect: Allow
   Action:

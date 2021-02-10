@@ -4,6 +4,7 @@ plugins:
   - serverless-bundle
   - serverless-offline
   - serverless-dotenv-plugin
+  - serverless-step-functions
 
 package:
   individually: true
@@ -29,6 +30,7 @@ provider:
   iamRoleStatements:
     - ${file(resources/common.yml):lambdaPolicyDynamoDBMain}
     - ${file(resources/common.yml):lambdaPolicyS3MainVideos}
+    - ${file(resources/common.yml):lambdaPolicySES}
     - ${file(resources/common.yml):lambdaPolicyXRay}
 
 functions:
@@ -39,6 +41,24 @@ functions:
           path: payment
           method: post
           cors: true
+  addSignup:
+    handler: src/lambdas/stepFunctionLambdas/addSignup.handler
+  getSignup:
+    handler: src/lambdas/stepFunctionLambdas/getSignup.handler
+  sendReminderEmail:
+    handler: src/lambdas/stepFunctionLambdas/sendReminderEmail.handler
+
+stepFunctions:
+  validate: true
+  stateMachines:
+    reminderEmail:
+      name: reminderEmail
+      events:
+        - http:
+            path: signup-with-reminders
+            method: POST
+            cors: true
+      definition: ${file(resources/step-functions.yml)}
 
 resources:
   - ${file(resources/dynamodb-tables.yml)}
