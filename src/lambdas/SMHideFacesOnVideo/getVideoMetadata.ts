@@ -11,7 +11,12 @@ type Event = {
   };
 };
 
-export const handler = async (event: Event): Promise<VideoData> => {
+type Response = {
+  s3key: string;
+  videoData: VideoData;
+};
+
+export const handler = async (event: Event): Promise<Response> => {
   const { s3key } = event.Input;
   const [, , id, filename] = s3key.split("/");
 
@@ -22,10 +27,10 @@ export const handler = async (event: Event): Promise<VideoData> => {
   }
 
   const getMetadata = async () => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       ffmpeg.ffprobe(resultVideo.value, function (error: any, metadata: any) {
         if (error) {
-          throw Error(`getVideoMetadata: ${error}`);
+          reject(`getVideoMetadata: ${error}`);
         }
         resolve(metadata);
       });
@@ -34,8 +39,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
 
   const metadata: any = await getMetadata();
   const video = metadata.streams[0];
-
-  return {
+  const videoData = {
     id,
     filename,
     duration: video.duration,
@@ -43,5 +47,10 @@ export const handler = async (event: Event): Promise<VideoData> => {
     height: video.height,
     totalFrames: video.nb_frames,
     fps: parseInt(video.r_frame_rate.split("/")[0]),
+  };
+
+  return {
+    s3key,
+    videoData,
   };
 };
