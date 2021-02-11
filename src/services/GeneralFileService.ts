@@ -24,7 +24,7 @@ export class GeneralFileService implements FileService {
   public async getTempUploadUrl(
     bucketName: string,
     key: string,
-    time: number = 60
+    time = 60
   ): Promise<Result<string>> {
     const command: PutObjectCommandInput = {
       Bucket: bucketName,
@@ -50,7 +50,7 @@ export class GeneralFileService implements FileService {
     bucketName: string,
     key: string,
     newFileName?: string,
-    time: number = 60 * 60 * 24 //1 day
+    time = 60 * 60 * 24 //1 day
   ): Promise<Result<string>> {
     const command: GetObjectCommandInput = {
       Bucket: bucketName,
