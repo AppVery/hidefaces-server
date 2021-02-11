@@ -1,9 +1,9 @@
 import { APIGatewayProxyResult, S3Event } from "aws-lambda";
 import baseAPIResponses from "../utils/baseApiResponses";
 import { parseString } from "../utils/validations";
-import * as AWS from "aws-sdk";
+import { StepFunctions } from "aws-sdk";
 
-const stepfunctions = new AWS.StepFunctions({});
+const stepfunctions = new StepFunctions({});
 
 export const handler = async (
   event: S3Event
@@ -16,8 +16,6 @@ export const handler = async (
     const data = {
       id,
       filename,
-      email: "cianespablo@gmail.com",
-      played: "false",
     };
 
     const params = {

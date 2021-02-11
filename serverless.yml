@@ -53,12 +53,26 @@ functions:
           rules:
             - prefix: videos/source/
           existing: true
-  addSignup:
-    handler: src/lambdas/stepFunctionLambdas/addSignup.handler
-  getSignup:
-    handler: src/lambdas/stepFunctionLambdas/getSignup.handler
-  sendReminderEmail:
-    handler: src/lambdas/stepFunctionLambdas/sendReminderEmail.handler
+  getVideoMetadata:
+    handler: src/lambdas/SMHideFacesOnVideo/getVideoMetadata.handler
+    layers:
+      - ${self:custom.ffmpegLayer}
+  explodeVideo:
+    handler: src/lambdas/SMHideFacesOnVideo/explodeVideo.handler
+    layers:
+      - ${self:custom.ffmpegLayer}
+  getFacesData:
+    handler: src/lambdas/SMHideFacesOnVideo/getFacesData.handler
+  mapAllFrames:
+    handler: src/lambdas/SMHideFacesOnVideo/mapAllFrames.handler
+  blurAllFrames:
+    handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames.handler
+  makeNewVideo:
+    handler: src/lambdas/SMHideFacesOnVideo/makeNewVideo.handler
+    layers:
+      - ${self:custom.ffmpegLayer}
+  sendEmail:
+    handler: src/lambdas/SMHideFacesOnVideo/sendEmail.handler
 
 stepFunctions:
   validate: true

@@ -9,6 +9,12 @@ custom:
     prod: hidefaces-prod
     dev: hidefaces-dev
   useDotenv: true
+  ffmpegLayer:
+    Fn::Join:
+      - ":"
+      - - "arn:aws:lambda:eu-west-1"
+        - !Ref AWS::AccountId
+        - "layer:ffmpeg:1"
 
 lambdaPolicyDynamoDBMain:
   Effect: Allow

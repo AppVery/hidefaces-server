@@ -1,7 +1,7 @@
-Comment: A step function to send reminder emails after 24 hrs
-StartAt: addEmailToDB
+Comment: A step functions to hide faces on a video
+StartAt: getVideoMetadata
 States:
-  addEmailToDB:
+  getVideoMetadata:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
     Parameters:
@@ -13,18 +13,14 @@ States:
               [
                 "arn:aws:lambda:eu-west-1",
                 { "Ref": "AWS::AccountId" },
-                "function:${self:service}-${self:provider.stage}-addSignup",
+                "function:${self:service}-${self:provider.stage}-getVideoMetadata",
               ],
             ],
         }
       Payload:
         Input.$: "$"
-    Next: wait for 24hr
-  wait for 24hr:
-    Type: Wait
-    Seconds: 20
-    Next: Read DB
-  Read DB:
+    Next: explodeVideo
+  explodeVideo:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
     Parameters:
@@ -36,21 +32,14 @@ States:
               [
                 "arn:aws:lambda:eu-west-1",
                 { "Ref": "AWS::AccountId" },
-                "function:${self:service}-${self:provider.stage}-getSignup",
+                "function:${self:service}-${self:provider.stage}-explodeVideo",
               ],
             ],
         }
       Payload:
         Input.$: "$"
-    Next: has played
-  has played:
-    Type: Choice
-    Choices:
-      - Variable: "$.Payload.played"
-        StringEquals: "true"
-        Next: close
-    Default: send reminder email
-  send reminder email:
+    Next: getFacesData
+  getFacesData:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
     Parameters:
@@ -62,7 +51,83 @@ States:
               [
                 "arn:aws:lambda:eu-west-1",
                 { "Ref": "AWS::AccountId" },
-                "function:${self:service}-${self:provider.stage}-sendReminderEmail",
+                "function:${self:service}-${self:provider.stage}-getFacesData",
+              ],
+            ],
+        }
+      Payload:
+        Input.$: "$"
+    Next: mapAllFrames
+  mapAllFrames:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName:
+        {
+          "Fn::Join":
+            [
+              ":",
+              [
+                "arn:aws:lambda:eu-west-1",
+                { "Ref": "AWS::AccountId" },
+                "function:${self:service}-${self:provider.stage}-mapAllFrames",
+              ],
+            ],
+        }
+      Payload:
+        Input.$: "$"
+    Next: blurAllFrames
+  blurAllFrames:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName:
+        {
+          "Fn::Join":
+            [
+              ":",
+              [
+                "arn:aws:lambda:eu-west-1",
+                { "Ref": "AWS::AccountId" },
+                "function:${self:service}-${self:provider.stage}-blurAllFrames",
+              ],
+            ],
+        }
+      Payload:
+        Input.$: "$"
+    Next: makeNewVideo
+  makeNewVideo:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName:
+        {
+          "Fn::Join":
+            [
+              ":",
+              [
+                "arn:aws:lambda:eu-west-1",
+                { "Ref": "AWS::AccountId" },
+                "function:${self:service}-${self:provider.stage}-makeNewVideo",
+              ],
+            ],
+        }
+      Payload:
+        Input.$: "$"
+    Next: sendEmail
+  sendEmail:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName:
+        {
+          "Fn::Join":
+            [
+              ":",
+              [
+                "arn:aws:lambda:eu-west-1",
+                { "Ref": "AWS::AccountId" },
+                "function:${self:service}-${self:provider.stage}-sendEmail",
               ],
             ],
         }

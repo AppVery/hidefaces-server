@@ -35,6 +35,8 @@
     "@aws-sdk/s3-request-presigner": "^3.4.1",
     "@aws-sdk/util-dynamodb": "^3.4.1",
     "aws-xray-sdk": "^3.2.0",
+    "chokidar": "^3.5.1",
+    "fluent-ffmpeg": "^2.1.2",
     "sharp": "^0.27.1",
     "stripe": "^8.135.0"
   }
