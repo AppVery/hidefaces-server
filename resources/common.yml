@@ -3,6 +3,8 @@ custom:
   bundle:
     linting: true
     sourcemaps: false
+    externals:
+      - chokidar
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:service}-${self:custom.stage}
   myProfile:

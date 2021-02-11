@@ -59,6 +59,7 @@ functions:
       - ${self:custom.ffmpegLayer}
   explodeVideo:
     handler: src/lambdas/SMHideFacesOnVideo/explodeVideo.handler
+    timeout: 180
     layers:
       - ${self:custom.ffmpegLayer}
   getFacesData:
