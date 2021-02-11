@@ -1,16 +1,13 @@
+import { VideoData } from "../../domain/interfaces/types";
+
 type Event = {
   Input: {
-    Payload: {
-      id: string;
-    };
+    Payload: VideoData;
   };
 };
-type Response = {
-  id: string;
-};
 
-export const handler = async (event: Event): Promise<Response> => {
-  const { id } = event.Input.Payload;
+export const handler = async (event: Event): Promise<VideoData> => {
+  const videoData = event.Input.Payload;
 
-  return { id };
+  return videoData;
 };

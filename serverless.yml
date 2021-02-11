@@ -70,6 +70,7 @@ functions:
     handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames.handler
   makeNewVideo:
     handler: src/lambdas/SMHideFacesOnVideo/makeNewVideo.handler
+    timeout: 180
     layers:
       - ${self:custom.ffmpegLayer}
   sendEmail:

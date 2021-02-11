@@ -1,11 +1,11 @@
 type Event = {
   Input: {
     Payload: {
-      id: string;
+      videoS3Key: string;
     };
   };
 };
 
 export const handler = async (event: Event): Promise<void> => {
-  const { id } = event.Input.Payload;
+  const { videoS3Key } = event.Input.Payload;
 };
