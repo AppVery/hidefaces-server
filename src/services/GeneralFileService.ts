@@ -8,6 +8,9 @@ import {
   GetObjectCommand,
   GetObjectCommandInput,
   GetObjectCommandOutput,
+  DeleteObjectCommand,
+  DeleteObjectCommandInput,
+  DeleteObjectCommandOutput,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Result } from "../domain/Result";
@@ -156,5 +159,25 @@ export class GeneralFileService implements FileService {
     }
 
     return Result.ok<any>(fileStream);
+  }
+
+  public async deleteS3file(
+    bucketName: string,
+    key: string
+  ): Promise<Result<void>> {
+    const command: DeleteObjectCommandInput = {
+      Bucket: bucketName,
+      Key: key,
+    };
+    const awsResult = await resultTryAWSSendCommand<DeleteObjectCommandOutput>(
+      this.s3,
+      new DeleteObjectCommand(command)
+    );
+
+    if (awsResult.isFailure) {
+      return Result.continueFail<void>(awsResult);
+    }
+
+    return Result.ok<void>();
   }
 }

@@ -35,6 +35,7 @@ lambdaPolicyS3MainVideos:
     - S3:GetObject
     - S3:PutObject
     - S3:PutObjectAcl
+    - S3:DeleteObject
   Resource:
     Fn::Join:
       - ""
