@@ -29,9 +29,28 @@ const initWatcher = async (path: string, id: string): Promise<void> => {
 
     if ("audio.mp3" === filename) return;
 
+    //save frame on S3
     await generalFileService.saveBuffer(bucketName, Key, fileBuffer);
     await fs.promises.unlink(path);
   });
+};
+
+const waitWatcher = async (tmpPath: string) => {
+  //await until remove (unlink) all files
+  let totalFiles = 0;
+  do {
+    await delay(1);
+    const files = await fs.promises.readdir(tmpPath);
+    totalFiles = files.length;
+  } while (totalFiles > 0);
+};
+
+const saveAudioOnS3 = async (id: string, path: string): Promise<void> => {
+  const audioBuffer = await fs.promises.readFile(path);
+  const audioS3Key = `videos/temporal/${id}/audio.mp3`;
+
+  await generalFileService.saveBuffer(bucketName, audioS3Key, audioBuffer);
+  await fs.promises.unlink(path);
 };
 
 export const handler = async (event: Event): Promise<VideoData> => {
@@ -73,13 +92,9 @@ export const handler = async (event: Event): Promise<VideoData> => {
 
   await explodeVideo();
 
-  const audioBuffer = await fs.promises.readFile(audioPath);
-  const audioS3Key = `videos/temporal/${videoData.id}/audio.mp3`;
+  await saveAudioOnS3(videoData.id, audioPath);
 
-  await generalFileService.saveBuffer(bucketName, audioS3Key, audioBuffer);
-
-  //wait chokidar finish with all frames
-  await delay(5);
+  await waitWatcher(tmpPath);
 
   return videoData;
 };
