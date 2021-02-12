@@ -68,6 +68,8 @@ functions:
   blurAllFrames:
     handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames.handler
     timeout: 600
+    layers:
+      - ${self:custom.sharpLayer}
   makeNewVideo:
     handler: src/lambdas/SMHideFacesOnVideo/makeNewVideo.handler
     timeout: 600
