@@ -57,25 +57,6 @@ States:
         }
       Payload:
         Input.$: "$"
-    Next: mapAllFrames
-  mapAllFrames:
-    Type: Task
-    Resource: arn:aws:states:::lambda:invoke
-    Parameters:
-      FunctionName:
-        {
-          "Fn::Join":
-            [
-              ":",
-              [
-                "arn:aws:lambda:eu-west-1",
-                { "Ref": "AWS::AccountId" },
-                "function:${self:service}-${self:provider.stage}-mapAllFrames",
-              ],
-            ],
-        }
-      Payload:
-        Input.$: "$"
     Next: blurAllFrames
   blurAllFrames:
     Type: Task

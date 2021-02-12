@@ -64,8 +64,7 @@ functions:
       - ${self:custom.ffmpegLayer}
   getFacesData:
     handler: src/lambdas/SMHideFacesOnVideo/getFacesData.handler
-  mapAllFrames:
-    handler: src/lambdas/SMHideFacesOnVideo/mapAllFrames.handler
+    timeout: 180
   blurAllFrames:
     handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames.handler
     timeout: 600
