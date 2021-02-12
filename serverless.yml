@@ -81,7 +81,7 @@ stepFunctions:
   stateMachines:
     SMHideFacesOnVideo:
       id: SMHideFacesOnVideo
-      definition: ${file(resources/video-step-functions.yml)}
+      definition: ${file(src/lambdas/SMHideFacesOnVideo/video-step-functions.yml)}
 
 resources:
   - ${file(resources/dynamodb-tables.yml)}
