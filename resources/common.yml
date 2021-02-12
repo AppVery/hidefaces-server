@@ -3,8 +3,8 @@ custom:
   bundle:
     linting: true
     sourcemaps: false
-    externals:
-      - chokidar
+    #externals:
+    #- chokidar
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:service}-${self:custom.stage}
   myProfile:
@@ -23,6 +23,12 @@ custom:
       - - "arn:aws:lambda:eu-west-1"
         - !Ref AWS::AccountId
         - "layer:sharp:1"
+  chokidarLayer:
+    Fn::Join:
+      - ":"
+      - - "arn:aws:lambda:eu-west-1"
+        - !Ref AWS::AccountId
+        - "layer:chokidar:1"
 
 lambdaPolicyDynamoDBMain:
   Effect: Allow

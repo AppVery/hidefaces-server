@@ -62,6 +62,7 @@ functions:
     timeout: 600
     layers:
       - ${self:custom.ffmpegLayer}
+      - ${self:custom.chokidarLayer}
   getFacesData:
     handler: src/lambdas/SMHideFacesOnVideo/getFacesData.handler
     timeout: 180
