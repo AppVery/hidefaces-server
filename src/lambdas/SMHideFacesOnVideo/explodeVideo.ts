@@ -72,6 +72,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
   const tmpPath = `/tmp/${videoData.id}`;
   const audioPath = `${tmpPath}/audio.mp3`;
   const framesPath = `${tmpPath}/frame-%d.png`;
+  videoData.fps = Math.min(videoData.fps, 30);
 
   await makeCleanTemporalFolder(tmpPath);
 
@@ -86,6 +87,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
         .on("error", function (err: any) {
           reject(err);
         })
+        .outputFPS(videoData.fps)
         .output(audioPath)
         .output(framesPath)
         .run();
