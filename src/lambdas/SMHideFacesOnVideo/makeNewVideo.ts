@@ -14,6 +14,7 @@ type Event = {
 
 type Response = {
   videoS3Key: string;
+  id: string;
 };
 
 const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
@@ -75,5 +76,5 @@ export const handler = async (event: Event): Promise<Response> => {
   const videoS3Key = `videos/final/${id}/${videoData.filename}`;
   await generalFileService.saveBuffer(bucketName, videoS3Key, videoBuffer);
 
-  return { videoS3Key };
+  return { videoS3Key, id: videoData.id };
 };
