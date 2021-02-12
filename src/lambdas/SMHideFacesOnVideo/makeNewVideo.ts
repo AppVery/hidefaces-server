@@ -36,7 +36,6 @@ export const handler = async (event: Event): Promise<Response> => {
     audioS3Key
   );
   await fs.promises.writeFile(audioPath, resultAudio.value);
-  await generalFileService.deleteS3file(bucketName, audioS3Key);
 
   let i = 1;
   const imagesStream = new Readable({
@@ -44,7 +43,6 @@ export const handler = async (event: Event): Promise<Response> => {
       const s3key = `videos/temporal/${id}/frame-${i}.png`;
       const frame = await generalFileService.getS3Buffer(bucketName, s3key);
       this.push(frame.value);
-      await generalFileService.deleteS3file(bucketName, s3key);
       i++;
       if (i > videoData.totalFrames) {
         this.push(null);

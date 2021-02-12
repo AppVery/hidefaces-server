@@ -3,6 +3,11 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: ${self:custom.prefix}-main
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 1
+            Prefix: "videos/"
+            Status: Enabled
       CorsConfiguration:
         CorsRules:
           - AllowedOrigins:
@@ -12,4 +17,7 @@ Resources:
             AllowedMethods:
               - GET
               - PUT
+              - POST
+              - DELETE
+              - HEAD
             MaxAge: 3000
