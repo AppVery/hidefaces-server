@@ -16,6 +16,13 @@ type Response = {
   videoS3Key: string;
 };
 
+const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
+  if (fs.existsSync(tmpPath)) {
+    await fs.promises.rmdir(tmpPath);
+  }
+  await fs.promises.mkdir(tmpPath);
+};
+
 export const handler = async (event: Event): Promise<Response> => {
   const videoData = event.Input.Payload;
   const id = videoData.id;
@@ -24,12 +31,7 @@ export const handler = async (event: Event): Promise<Response> => {
   const videoPath = `${tmpPath}/${videoData.filename}`;
   const audioPath = `${tmpPath}/audio.mp3`;
 
-  try {
-    await fs.promises.mkdir(tmpPath);
-  } catch (error) {
-    /* eslint-disable no-console */
-    console.log("mkdir", error);
-  }
+  await makeCleanTemporalFolder(tmpPath);
 
   const resultAudio = await generalFileService.getS3Buffer(
     bucketName,
