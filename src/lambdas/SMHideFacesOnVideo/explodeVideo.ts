@@ -6,6 +6,7 @@ import * as chokidar from "chokidar";
 import * as fs from "fs";
 
 const bucketName = process.env.MAIN_BUCKET_NAME;
+const MAX_FPS = 30;
 
 type Event = {
   Input: {
@@ -16,7 +17,10 @@ type Event = {
   };
 };
 
-const initWatcher = async (path: string, id: string): Promise<void> => {
+const initWatcher = async (
+  path: string,
+  videoData: VideoData
+): Promise<void> => {
   const watcher = chokidar.watch(path, {
     ignored: /^\./,
     persistent: true,
@@ -25,9 +29,9 @@ const initWatcher = async (path: string, id: string): Promise<void> => {
   watcher.on("add", async function (path: any) {
     const fileBuffer = await fs.promises.readFile(path);
     const filename = path.split("/")[3];
-    const Key = `videos/temporal/${id}/${filename}`;
+    const Key = `videos/temporal/${videoData.id}/${filename}`;
 
-    if ("audio.mp3" === filename) return;
+    if ("audio.mp3" === filename || videoData.filename === filename) return;
 
     //save frame on S3
     await generalFileService.saveBuffer(bucketName, Key, fileBuffer);
@@ -72,16 +76,43 @@ export const handler = async (event: Event): Promise<VideoData> => {
   const tmpPath = `/tmp/${videoData.id}`;
   const audioPath = `${tmpPath}/audio.mp3`;
   const framesPath = `${tmpPath}/frame-%d.png`;
-  videoData.fps = Math.min(videoData.fps, 30);
+  let videoPath: boolean | string = false;
 
   await makeCleanTemporalFolder(tmpPath);
 
-  initWatcher(tmpPath, videoData.id);
+  initWatcher(tmpPath, videoData);
 
-  const explodeVideo = async () => {
+  const changeVideoFPS = async () => {
     return new Promise((resolve, reject) => {
+      if (videoData.fps <= MAX_FPS) {
+        resolve("ok");
+      }
+      videoData.totalFrames = (videoData.totalFrames * MAX_FPS) / videoData.fps;
+      videoData.fps = MAX_FPS;
+      videoPath = `${tmpPath}/${videoData.filename}`;
+
       ffmpeg(resultVideo.value)
         .on("end", function () {
+          resolve("ok");
+        })
+        .on("error", function (err: any) {
+          reject(err);
+        })
+        .outputFPS(MAX_FPS)
+        .save(videoPath);
+    });
+  };
+
+  await changeVideoFPS();
+
+  const explodeVideo = async () => {
+    const video = videoPath || resultVideo.value;
+    return new Promise((resolve, reject) => {
+      ffmpeg(video)
+        .on("end", async function () {
+          if (videoPath) {
+            await fs.promises.unlink(videoPath as string);
+          }
           resolve("ok");
         })
         .on("error", function (err: any) {
