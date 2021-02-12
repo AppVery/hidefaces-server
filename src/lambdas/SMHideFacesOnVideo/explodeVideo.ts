@@ -53,6 +53,13 @@ const saveAudioOnS3 = async (id: string, path: string): Promise<void> => {
   await fs.promises.unlink(path);
 };
 
+const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
+  if (fs.existsSync(tmpPath)) {
+    await fs.promises.rmdir(tmpPath);
+  }
+  await fs.promises.mkdir(tmpPath);
+};
+
 export const handler = async (event: Event): Promise<VideoData> => {
   const { s3key, videoData } = event.Input.Payload;
 
@@ -66,12 +73,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
   const audioPath = `${tmpPath}/audio.mp3`;
   const framesPath = `${tmpPath}/frame-%d.png`;
 
-  try {
-    await fs.promises.mkdir(tmpPath);
-  } catch (error) {
-    /* eslint-disable no-console */
-    console.log("mkdir", error);
-  }
+  await makeCleanTemporalFolder(tmpPath);
 
   initWatcher(tmpPath, videoData.id);
 
