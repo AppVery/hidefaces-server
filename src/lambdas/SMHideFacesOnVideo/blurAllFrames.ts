@@ -8,8 +8,7 @@ import {
   FaceDetail,
   BoundingBox,
 } from "@aws-sdk/client-rekognition";
-import { Result } from "../../domain/Result";
-import { Blur } from "../../services/operations/BlurPO";
+import { Pixel } from "../../services/operations/PixelPO";
 
 const bucketName = process.env.MAIN_BUCKET_NAME;
 
@@ -35,7 +34,7 @@ const getFacesData = async (
   const baseS3key = `videos/temporal/${videoData.id}`;
   const facesData = new Map<number, FaceDetail[]>();
 
-  for (let i = 1; i <= videoData.totalFrames; i = i + videoData.fps) {
+  for (let i = 1; i <= videoData.totalFrames; i += videoData.fps) {
     const s3key = getFrameS3Key(videoData.id, i);
     const result = await awsRekognitionService.getDataFacesImageS3(
       s3key,
@@ -56,6 +55,7 @@ const getFacesData = async (
       }
     }
   }
+
   return facesData;
 };
 
@@ -64,7 +64,7 @@ const getFacesPositions = (
   frameHeight: number,
   BoundingBox: BoundingBox
 ): Position => {
-  const INC_FACES_BOX = 1.8;
+  const INC_FACES_BOX = 2.5;
   const { Top, Left, Width, Height } = BoundingBox;
   const top = Math.floor(
     Top * frameHeight +
@@ -85,12 +85,9 @@ const getFacesPositions = (
 };
 
 export const handler = async (event: Event): Promise<VideoData> => {
-  const operation = new Blur(imageService);
+  const operation = new Pixel(imageService);
   const videoData = event.Input.Payload;
   const facesData = await getFacesData(videoData);
-
-  /* eslint-disable no-console */
-  console.log(facesData);
 
   let frameWithData = 1;
   for (let i = 1; i <= videoData.totalFrames; i++) {

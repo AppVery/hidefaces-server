@@ -17,10 +17,7 @@ type Event = {
   };
 };
 
-const initWatcher = async (
-  path: string,
-  videoData: VideoData
-): Promise<void> => {
+const initWatcher = (path: string, videoData: VideoData): void => {
   const watcher = chokidar.watch(path, {
     ignored: /^\./,
     persistent: true,
@@ -59,7 +56,7 @@ const saveAudioOnS3 = async (id: string, path: string): Promise<void> => {
 
 const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
   if (fs.existsSync(tmpPath)) {
-    await fs.promises.rmdir(tmpPath);
+    fs.rmdirSync(tmpPath, { recursive: true });
   }
   await fs.promises.mkdir(tmpPath);
 };
@@ -76,7 +73,8 @@ export const handler = async (event: Event): Promise<VideoData> => {
   const tmpPath = `/tmp/${videoData.id}`;
   const audioPath = `${tmpPath}/audio.mp3`;
   const framesPath = `${tmpPath}/frame-%d.png`;
-  let videoPath: boolean | string = false;
+  const newVideoPath = `${tmpPath}/${videoData.filename}`;
+  const isOkFPS = videoData.fps <= MAX_FPS;
 
   await makeCleanTemporalFolder(tmpPath);
 
@@ -84,12 +82,11 @@ export const handler = async (event: Event): Promise<VideoData> => {
 
   const changeVideoFPS = async () => {
     return new Promise((resolve, reject) => {
-      if (videoData.fps <= MAX_FPS) {
+      if (isOkFPS) {
         resolve("ok");
       }
       videoData.totalFrames = (videoData.totalFrames * MAX_FPS) / videoData.fps;
       videoData.fps = MAX_FPS;
-      videoPath = `${tmpPath}/${videoData.filename}`;
 
       ffmpeg(resultVideo.value)
         .on("end", function () {
@@ -99,26 +96,25 @@ export const handler = async (event: Event): Promise<VideoData> => {
           reject(err);
         })
         .outputFPS(MAX_FPS)
-        .save(videoPath);
+        .save(newVideoPath);
     });
   };
 
   await changeVideoFPS();
 
   const explodeVideo = async () => {
-    const video = videoPath || resultVideo.value;
+    const video = isOkFPS ? resultVideo.value : newVideoPath;
     return new Promise((resolve, reject) => {
       ffmpeg(video)
         .on("end", async function () {
-          if (videoPath) {
-            await fs.promises.unlink(videoPath as string);
+          if (fs.existsSync(newVideoPath)) {
+            await fs.promises.unlink(newVideoPath as string);
           }
           resolve("ok");
         })
         .on("error", function (err: any) {
           reject(err);
         })
-        .outputFPS(videoData.fps)
         .output(audioPath)
         .output(framesPath)
         .run();

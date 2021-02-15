@@ -19,7 +19,7 @@ type Response = {
 
 const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
   if (fs.existsSync(tmpPath)) {
-    await fs.promises.rmdir(tmpPath);
+    fs.rmdirSync(tmpPath, { recursive: true });
   }
   await fs.promises.mkdir(tmpPath);
 };
