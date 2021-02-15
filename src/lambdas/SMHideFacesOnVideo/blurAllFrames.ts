@@ -2,7 +2,7 @@ import { VideoData } from "../../domain/interfaces/types";
 import { generalFileService } from "../../services";
 import { Position } from "../../domain/interfaces/imageService";
 import { SharpImageService } from "../../services/SharpImageService";
-import { ImageRekognitionService } from "../../services/ImageRekognitionService";
+import { AwsRekognitionService } from "../../services/AwsRekognitionService";
 import {
   RekognitionClient,
   FaceDetail,
@@ -15,7 +15,7 @@ const bucketName = process.env.MAIN_BUCKET_NAME;
 
 const awsRekognition = new RekognitionClient({});
 
-const imageRekognitionService = new ImageRekognitionService(awsRekognition);
+const awsRekognitionService = new AwsRekognitionService(awsRekognition);
 
 const imageService = new SharpImageService();
 
@@ -37,12 +37,23 @@ const getFacesData = async (
 
   for (let i = 1; i <= videoData.totalFrames; i = i + videoData.fps) {
     const s3key = getFrameS3Key(videoData.id, i);
-    const result = await imageRekognitionService.getDataFacesImageS3(
+    const result = await awsRekognitionService.getDataFacesImageS3(
       s3key,
       bucketName
     );
+
     if (result.isSuccess) {
-      facesData.set(i, result.value);
+      const beforeFrameData = facesData.has(i - videoData.fps)
+        ? facesData.get(i - videoData.fps)
+        : [];
+      if (result.value.length > 0 && beforeFrameData.length === 0) {
+        facesData.set(i - videoData.fps, result.value);
+      }
+      if (result.value.length === 0 && beforeFrameData.length > 0) {
+        facesData.set(i, beforeFrameData);
+      } else {
+        facesData.set(i, result.value);
+      }
     }
   }
   return facesData;
@@ -55,17 +66,19 @@ const getFacesPositions = (
 ): Position => {
   const INC_FACES_BOX = 1.8;
   const { Top, Left, Width, Height } = BoundingBox;
+  const top = Math.floor(
+    Top * frameHeight +
+      (Height * frameHeight) / 2 -
+      (Height * frameHeight * INC_FACES_BOX) / 2
+  );
+  const left = Math.floor(
+    Left * frameWidth +
+      (Width * frameWidth) / 2 -
+      (Width * frameWidth * INC_FACES_BOX) / 2
+  );
   return {
-    top: Math.floor(
-      Top * frameHeight +
-        (Height * frameHeight) / 2 -
-        (Height * frameHeight * INC_FACES_BOX) / 2
-    ),
-    left: Math.floor(
-      Left * frameWidth +
-        (Width * frameWidth) / 2 -
-        (Width * frameWidth * INC_FACES_BOX) / 2
-    ),
+    top: top > 0 ? top : 0,
+    left: left > 0 ? left : 0,
     width: Math.floor(Width * frameWidth * INC_FACES_BOX),
     height: Math.floor(Height * frameHeight * INC_FACES_BOX),
   };
@@ -75,33 +88,51 @@ export const handler = async (event: Event): Promise<VideoData> => {
   const operation = new Blur(imageService);
   const videoData = event.Input.Payload;
   const facesData = await getFacesData(videoData);
+
+  /* eslint-disable no-console */
+  console.log(facesData);
+
   let frameWithData = 1;
   for (let i = 1; i <= videoData.totalFrames; i++) {
     frameWithData =
       i === frameWithData || i < frameWithData + videoData.fps / 2
         ? frameWithData
         : frameWithData + videoData.fps;
+
     const frameData = facesData.has(frameWithData)
       ? facesData.get(frameWithData)
       : facesData.get(frameWithData - videoData.fps);
+
+    const frameFacesPositions = frameData.map(({ BoundingBox }) => {
+      return getFacesPositions(videoData.width, videoData.height, BoundingBox);
+    });
+
+    if (frameFacesPositions.length === 0) {
+      /* eslint-disable no-console */
+      console.log("empty faces data");
+      continue;
+    }
 
     const frameS3key = getFrameS3Key(videoData.id, i);
     const resultFrameBuffer = await generalFileService.getS3Buffer(
       bucketName,
       frameS3key
     );
-    const frameFacesPositions = frameData.map(({ BoundingBox }) => {
-      return getFacesPositions(videoData.width, videoData.height, BoundingBox);
-    });
-    const resultOperation = await operation.doTransformation(
-      resultFrameBuffer.value,
-      frameFacesPositions
-    );
-    await generalFileService.saveBuffer(
-      bucketName,
-      frameS3key,
-      resultOperation.value
-    );
+
+    if (resultFrameBuffer.isSuccess) {
+      const resultOperation = await operation.doTransformation(
+        resultFrameBuffer.value,
+        frameFacesPositions
+      );
+
+      if (resultOperation.isSuccess) {
+        await generalFileService.saveBuffer(
+          bucketName,
+          frameS3key,
+          resultOperation.value
+        );
+      }
+    }
   }
 
   return videoData;
