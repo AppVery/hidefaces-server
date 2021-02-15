@@ -1,4 +1,4 @@
-import { IAService } from "../domain/interfaces/iaService";
+import { RekognitionService } from "../domain/interfaces/rekognitionService";
 import { Result } from "../domain/Result";
 import { resultTryAWSSendCommand } from "../utils/resultTryAWSRequest";
 import {
@@ -9,7 +9,7 @@ import {
   FaceDetail,
 } from "@aws-sdk/client-rekognition";
 
-export class ImageRekognitionService implements IAService {
+export class AwsRekognitionService implements RekognitionService {
   private service: RekognitionClient;
 
   constructor(service: RekognitionClient) {

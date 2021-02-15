@@ -55,6 +55,12 @@ lambdaPolicyStateMachineVideo:
   Resource:
     - "Fn::GetAtt": [SMHideFacesOnVideo, Arn]
 
+lambdaPolicyRekognition:
+  Effect: Allow
+  Action:
+    - rekognition:DetectFaces
+  Resource: "*"
+
 lambdaPolicySES:
   Effect: Allow
   Action:

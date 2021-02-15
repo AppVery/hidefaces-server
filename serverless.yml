@@ -33,6 +33,7 @@ provider:
     - ${file(resources/common.yml):lambdaPolicyDynamoDBMain}
     - ${file(resources/common.yml):lambdaPolicyS3MainVideos}
     - ${file(resources/common.yml):lambdaPolicyStateMachineVideo}
+    - ${file(resources/common.yml):lambdaPolicyRekognition}
     - ${file(resources/common.yml):lambdaPolicySES}
     - ${file(resources/common.yml):lambdaPolicyXRay}
 
