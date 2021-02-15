@@ -25,7 +25,7 @@ export class Blur extends PositionsOperations {
     const borderSVG = `<svg><rect x="0" y="0" width="${position.width}" height="${position.height}" rx="100" ry="100"/></svg>`;
 
     //Depends on size of the image we need more or less blur parameter to get similar result of blur effect: random number after several tests
-    const dynamicBlur = Math.ceil(10 + position.width * 0.04);
+    const dynamicBlur = Math.ceil(10 + position.width * 0.02);
 
     const resultBlur = await this.service.makeBlurBorder(
       resultExtract.value,
