@@ -64,7 +64,7 @@ const getFacesPositions = (
   frameHeight: number,
   BoundingBox: BoundingBox
 ): Position => {
-  const INC_FACES_BOX = 2.5;
+  const INC_FACES_BOX = 2.2;
   const { Top, Left, Width, Height } = BoundingBox;
   const top = Math.floor(
     Top * frameHeight +
