@@ -65,7 +65,7 @@ functions:
       - ${self:custom.ffmpegLayer}
   blurAllFrames:
     handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames.handler
-    timeout: 600
+    timeout: 900
     layers:
       - ${self:custom.sharpLayer}
   makeNewVideo:
