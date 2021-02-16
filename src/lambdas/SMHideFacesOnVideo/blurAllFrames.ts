@@ -8,16 +8,11 @@ const bucketName = process.env.MAIN_BUCKET_NAME;
 
 const imageService = new SharpImageService();
 
-type FramesData = {
-  facesPositions: [number, Position[]][];
-  mapper: [number, number][];
-};
-
 type Event = {
   Input: {
     Payload: {
       videoData: VideoData;
-      framesData: FramesData;
+      framesData: string;
     };
   };
 };
@@ -25,11 +20,10 @@ type Event = {
 export const handler = async (event: Event): Promise<VideoData> => {
   const operation = new Pixel(imageService);
   const { videoData, framesData } = event.Input.Payload;
+  const data = JSON.parse(framesData);
 
-  const mapper: Map<number, number> = new Map(framesData.mapper);
-  const facesPositions: Map<number, Position[]> = new Map(
-    framesData.facesPositions
-  );
+  const mapper: Map<number, number> = new Map(data.mapper);
+  const facesPositions: Map<number, Position[]> = new Map(data.facesPositions);
 
   for (let i = 1; i <= videoData.totalFrames; i++) {
     const frameWithData = mapper.get(i);
@@ -37,7 +31,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
 
     if (frameFacesPositions.length === 0) {
       /* eslint-disable no-console */
-      console.log("empty faces data");
+      console.log("empty faces data on frame", i);
       continue;
     }
 

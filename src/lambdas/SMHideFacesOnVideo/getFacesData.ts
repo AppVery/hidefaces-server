@@ -19,14 +19,9 @@ type Event = {
   };
 };
 
-type FramesData = {
-  facesPositions: [number, Position[]][];
-  mapper: [number, number][];
-};
-
 type Response = {
   videoData: VideoData;
-  framesData: FramesData;
+  framesData: string;
 };
 
 const getFacesPositions = (
@@ -67,14 +62,11 @@ export const handler = async (event: Event): Promise<Response> => {
       bucketName
     );
 
-    /* eslint-disable no-console */
-    console.log("frame", i, result.value.length);
-
     if (result.isSuccess) {
       const beforeFrameData = facesData.has(i - interval)
         ? facesData.get(i - interval)
         : [];
-      if (result.value.length > 0 && beforeFrameData.length === 0) {
+      if (result.value.length > 0 && i > 1 && beforeFrameData.length === 0) {
         facesData.set(i - interval, result.value);
       }
       if (result.value.length === 0 && beforeFrameData.length > 0) {
@@ -104,10 +96,9 @@ export const handler = async (event: Event): Promise<Response> => {
   let frameWithData = 1;
 
   for (let i = 1; i <= videoData.totalFrames; i++) {
-    frameWithData =
-      i === frameWithData || i < frameWithData + interval
-        ? frameWithData
-        : frameWithData + interval;
+    if (i >= frameWithData + interval / 2) {
+      frameWithData = frameWithData + interval;
+    }
 
     const frameToMap = facesPositions.has(frameWithData)
       ? frameWithData
@@ -116,10 +107,10 @@ export const handler = async (event: Event): Promise<Response> => {
     mapper.set(i, frameToMap);
   }
 
-  const framesData: FramesData = {
+  const framesData: string = JSON.stringify({
     facesPositions: [...facesPositions],
     mapper: [...mapper],
-  };
+  });
 
   return { videoData, framesData };
 };
