@@ -64,6 +64,9 @@ functions:
     timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
+  getFacesData:
+    handler: src/lambdas/SMHideFacesOnVideo/getFacesData.handler
+    timeout: 200
   blurAllFrames:
     handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames.handler
     memorySize: 3008
