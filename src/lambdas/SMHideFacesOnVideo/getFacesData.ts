@@ -52,6 +52,7 @@ const getFacesPositions = (
 export const handler = async (event: Event): Promise<Response> => {
   const videoData = event.Input.Payload;
   const interval = Math.floor(videoData.fps / 2);
+  let lastFrameWithData = 1;
 
   const facesData = new Map<number, FaceDetail[]>();
 
@@ -75,6 +76,8 @@ export const handler = async (event: Event): Promise<Response> => {
         facesData.set(i, result.value);
       }
     }
+
+    lastFrameWithData = i;
   }
 
   const facesPositions = new Map<number, Position[]>();
@@ -89,6 +92,29 @@ export const handler = async (event: Event): Promise<Response> => {
         );
       });
       facesPositions.set(key, frameFacesPositions);
+    }
+  }
+
+  //improve frames data by sharing data between frames
+  for (const [key, frameData] of facesPositions) {
+    //if we are not in the first or last frame
+    if (key > 1 && key < lastFrameWithData) {
+      const beforeData = facesPositions.get(key - interval);
+      const afterData = facesPositions.get(key + interval);
+
+      const beforeNumber = beforeData.length;
+      const currentNumber = frameData.length;
+      const afterNumber = afterData.length;
+
+      //improve before frame in case of less faces
+      if (beforeNumber < currentNumber) {
+        facesPositions.set(key - interval, [...beforeData, ...frameData]);
+      }
+
+      //if current frame have less faces than after and before
+      if (currentNumber < beforeNumber && currentNumber < afterNumber) {
+        facesPositions.set(key, [...frameData, ...afterData]);
+      }
     }
   }
 
