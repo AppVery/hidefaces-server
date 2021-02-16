@@ -60,17 +60,20 @@ functions:
       - ${self:custom.ffmpegLayer}
   explodeVideo:
     handler: src/lambdas/SMHideFacesOnVideo/explodeVideo.handler
-    timeout: 900
+    memorySize: 1792
+    timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
   blurAllFrames:
     handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames.handler
+    memorySize: 3008
     timeout: 900
     layers:
       - ${self:custom.sharpLayer}
   makeNewVideo:
     handler: src/lambdas/SMHideFacesOnVideo/makeNewVideo.handler
-    timeout: 900
+    memorySize: 1792
+    timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
   sendEmail:
