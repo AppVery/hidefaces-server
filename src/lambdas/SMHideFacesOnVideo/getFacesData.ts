@@ -1,5 +1,6 @@
 import { VideoData } from "../../domain/interfaces/types";
 import { Position } from "../../domain/interfaces/imageService";
+import { parsePositiveNumber } from "../../utils/validations";
 import { AwsRekognitionService } from "../../services/AwsRekognitionService";
 import {
   RekognitionClient,
@@ -25,10 +26,13 @@ type Response = {
 };
 
 const getFacesPositions = (
-  frameWidth: number,
-  frameHeight: number,
+  videoData: VideoData,
   BoundingBox: BoundingBox
 ): Position => {
+  const frameWidth = videoData.width;
+  const frameHeight = videoData.height;
+  const maxWidth = videoData.width;
+  const maxHeight = videoData.height;
   const INC_FACES_BOX = 2.2;
   const { Top, Left, Width, Height } = BoundingBox;
   const top = Math.floor(
@@ -41,11 +45,25 @@ const getFacesPositions = (
       (Width * frameWidth) / 2 -
       (Width * frameWidth * INC_FACES_BOX) / 2
   );
-  return {
-    top: top > 0 ? top : 0,
-    left: left > 0 ? left : 0,
+  const positions = {
+    top: Math.min(parsePositiveNumber(top), maxHeight),
+    left: Math.min(parsePositiveNumber(left), maxWidth),
     width: Math.floor(Width * frameWidth * INC_FACES_BOX),
     height: Math.floor(Height * frameHeight * INC_FACES_BOX),
+  };
+
+  //avoid set wrong data outside max dimensions of frames
+  return {
+    top: positions.top,
+    left: positions.left,
+    width:
+      positions.left + positions.width >= maxWidth
+        ? maxWidth - positions.left
+        : positions.width,
+    height:
+      positions.top + positions.height >= maxHeight
+        ? maxHeight - positions.height
+        : positions.height,
   };
 };
 
@@ -54,7 +72,7 @@ export const handler = async (event: Event): Promise<Response> => {
   const interval = Math.floor(videoData.fps / 2);
   let lastFrameWithData = 1;
 
-  const facesData = new Map<number, FaceDetail[]>();
+  const facesData: Map<number, FaceDetail[]> = new Map();
 
   for (let i = 1; i <= videoData.totalFrames; i += interval) {
     const s3key = `videos/temporal/${videoData.id}/frame-${i}.png`;
@@ -85,11 +103,7 @@ export const handler = async (event: Event): Promise<Response> => {
   for (const [key, frameData] of facesData) {
     if (frameData && frameData.length > 0) {
       const frameFacesPositions = frameData.map(({ BoundingBox }) => {
-        return getFacesPositions(
-          videoData.width,
-          videoData.height,
-          BoundingBox
-        );
+        return getFacesPositions(videoData, BoundingBox);
       });
       facesPositions.set(key, frameFacesPositions);
     }
@@ -99,21 +113,23 @@ export const handler = async (event: Event): Promise<Response> => {
   for (const [key, frameData] of facesPositions) {
     //if we are not in the first or last frame
     if (key > 1 && key < lastFrameWithData) {
-      const beforeData = facesPositions.get(key - interval);
-      const afterData = facesPositions.get(key + interval);
-
-      const beforeNumber = beforeData.length;
-      const currentNumber = frameData.length;
-      const afterNumber = afterData.length;
+      const beforeData = facesPositions.get(key - interval) || [];
+      const currentData = frameData || [];
+      const afterData = facesPositions.get(key + interval) || [];
 
       //improve before frame in case of less faces
-      if (beforeNumber < currentNumber) {
-        facesPositions.set(key - interval, [...beforeData, ...frameData]);
+      if (beforeData.length < currentData.length) {
+        facesPositions.set(key - interval, [...beforeData, ...currentData]);
       }
 
       //if current frame have less faces than after and before
-      if (currentNumber < beforeNumber && currentNumber < afterNumber) {
-        facesPositions.set(key, [...frameData, ...afterData]);
+      if (
+        currentData.length < beforeData.length &&
+        currentData.length < afterData.length
+      ) {
+        facesPositions.set(key, [...currentData, ...afterData]);
+      } else {
+        facesPositions.set(key, [...beforeData, ...currentData]);
       }
     }
   }

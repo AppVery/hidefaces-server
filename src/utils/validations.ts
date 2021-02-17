@@ -51,3 +51,24 @@ export const parseExtension = (label: string, data: unknown): string => {
 
   return type;
 };
+
+const isNumber = (number: unknown): number is number => {
+  return typeof number === "number" || number instanceof Number;
+};
+
+export const parseNumber = (label: string, data: unknown): number => {
+  if (!data || !isNumber(data)) {
+    throw new Error(`Incorrect or missing number: ${label}`);
+  }
+
+  return data;
+};
+
+export const parsePositiveNumber = (
+  data: unknown,
+  label = "must be positive number"
+): number => {
+  const number = parseNumber(label, data);
+
+  return number > 0 ? number : 0;
+};
