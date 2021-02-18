@@ -98,14 +98,16 @@ export const handler = async (event: Event): Promise<Response> => {
     fps: Math.ceil(parseInt(fpsRate[0]) / parseInt(fpsRate[1])),
   };
 
+  if (!videoData.fps || videoData.fps > MAX_FPS) {
+    videoData.fps = MAX_FPS;
+    videoData.totalFrames = Math.ceil(videoData.duration * MAX_FPS);
+  }
+
   let newS3key = s3key;
 
   if (videoData.fps > MAX_FPS) {
     const videoS3Key = await changeVideoSourceFPS(videoData, s3key);
     newS3key = videoS3Key;
-
-    videoData.totalFrames = (videoData.totalFrames * MAX_FPS) / videoData.fps;
-    videoData.fps = MAX_FPS;
   }
 
   return {
