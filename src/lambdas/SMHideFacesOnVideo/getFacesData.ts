@@ -33,7 +33,7 @@ const getFacesPositions = (
   const frameHeight = videoData.height;
   const maxWidth = videoData.width;
   const maxHeight = videoData.height;
-  const INC_FACES_BOX = 2.2;
+  const INC_FACES_BOX = 2;
   const { Top, Left, Width, Height } = BoundingBox;
   const top = Math.floor(
     Top * frameHeight +
@@ -62,7 +62,7 @@ const getFacesPositions = (
         : positions.width,
     height:
       positions.top + positions.height >= maxHeight
-        ? maxHeight - positions.height
+        ? maxHeight - positions.top
         : positions.height,
   };
 };
@@ -128,8 +128,6 @@ export const handler = async (event: Event): Promise<Response> => {
         currentData.length < afterData.length
       ) {
         facesPositions.set(key, [...currentData, ...afterData]);
-      } else {
-        facesPositions.set(key, [...beforeData, ...currentData]);
       }
     }
   }
