@@ -98,5 +98,15 @@ export const handler = async (event: Event): Promise<VideoData> => {
 
   await waitWatcher(tmpPath);
 
+  if (!videoData.width || !videoData.height) {
+    const frameS3key = `videos/temporal/${videoData.id}/frame-1.png`;
+    const frame = await generalFileService.getS3Buffer(bucketName, frameS3key);
+    /* eslint-disable @typescript-eslint/no-var-requires */
+    const imageSize = require("image-size");
+    const dimensions = imageSize(frame.value);
+    videoData.width = dimensions.width;
+    videoData.height = dimensions.height;
+  }
+
   return videoData;
 };
