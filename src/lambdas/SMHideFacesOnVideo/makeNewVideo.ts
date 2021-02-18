@@ -45,7 +45,9 @@ export const handler = async (event: Event): Promise<Response> => {
     async read() {
       const s3key = `videos/temporal/${id}/frame-${i}.png`;
       const frame = await generalFileService.getS3Buffer(bucketName, s3key);
-      this.push(frame.value);
+      if (frame.isSuccess) {
+        this.push(frame.value);
+      }
       i++;
       if (i > videoData.totalFrames) {
         this.push(null);

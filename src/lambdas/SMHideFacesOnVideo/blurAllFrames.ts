@@ -29,9 +29,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
     const frameWithData = mapper.get(i);
     const frameFacesPositions = facesPositions.get(frameWithData);
 
-    if (frameFacesPositions.length === 0) {
-      /* eslint-disable no-console */
-      console.log("empty faces data on frame", i);
+    if (!frameFacesPositions || frameFacesPositions.length === 0) {
       continue;
     }
 
