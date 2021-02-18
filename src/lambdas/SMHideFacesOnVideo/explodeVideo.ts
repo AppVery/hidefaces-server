@@ -6,7 +6,6 @@ import * as chokidar from "chokidar";
 import * as fs from "fs";
 
 const bucketName = process.env.MAIN_BUCKET_NAME;
-const MAX_FPS = 30;
 
 type Event = {
   Input: {
@@ -73,43 +72,15 @@ export const handler = async (event: Event): Promise<VideoData> => {
   const tmpPath = `/tmp/${videoData.id}`;
   const audioPath = `${tmpPath}/audio.mp3`;
   const framesPath = `${tmpPath}/frame-%d.png`;
-  const newVideoPath = `${tmpPath}/${videoData.filename}`;
-  const isOkFPS = videoData.fps <= MAX_FPS;
 
   await makeCleanTemporalFolder(tmpPath);
 
   initWatcher(tmpPath, videoData);
 
-  const changeVideoFPS = async () => {
-    return new Promise((resolve, reject) => {
-      if (isOkFPS) {
-        resolve("ok");
-      }
-      videoData.totalFrames = (videoData.totalFrames * MAX_FPS) / videoData.fps;
-      videoData.fps = MAX_FPS;
-
-      ffmpeg(resultVideo.value)
-        .on("end", function () {
-          resolve("ok");
-        })
-        .on("error", function (err: any) {
-          reject(err);
-        })
-        .outputFPS(MAX_FPS)
-        .save(newVideoPath);
-    });
-  };
-
-  await changeVideoFPS();
-
   const explodeVideo = async () => {
-    const video = isOkFPS ? resultVideo.value : newVideoPath;
     return new Promise((resolve, reject) => {
-      ffmpeg(video)
+      ffmpeg(resultVideo.value)
         .on("end", async function () {
-          if (fs.existsSync(newVideoPath)) {
-            await fs.promises.unlink(newVideoPath as string);
-          }
           resolve("ok");
         })
         .on("error", function (err: any) {

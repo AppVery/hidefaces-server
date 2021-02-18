@@ -56,6 +56,7 @@ functions:
           existing: true
   getVideoMetadata:
     handler: src/lambdas/SMHideFacesOnVideo/getVideoMetadata.handler
+    timeout: 200
     layers:
       - ${self:custom.ffmpegLayer}
   explodeVideo:
