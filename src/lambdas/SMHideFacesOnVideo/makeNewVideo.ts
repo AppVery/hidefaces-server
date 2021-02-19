@@ -43,15 +43,24 @@ export const handler = async (event: Event): Promise<Response> => {
   let i = 1;
   const imagesStream = new Readable({
     async read() {
-      const s3key = `videos/temporal/${id}/frame-${i}.png`;
-      const frame = await generalFileService.getS3Buffer(bucketName, s3key);
-      if (frame.isSuccess) {
-        this.push(frame.value);
-      }
-      i++;
-      if (i > videoData.totalFrames) {
-        this.push(null);
-      }
+      let error: boolean;
+      do {
+        const s3key = `videos/temporal/${id}/frame-${i}.png`;
+        const frame = await generalFileService.getS3Buffer(bucketName, s3key);
+        if (frame.isSuccess) {
+          this.push(frame.value);
+          error = false;
+        } else {
+          /* eslint-disable  no-console */
+          console.log("frame error", i, frame);
+          error = true;
+        }
+        i++;
+        if (i > videoData.totalFrames) {
+          this.push(null);
+          error = false;
+        }
+      } while (error);
     },
   });
 
