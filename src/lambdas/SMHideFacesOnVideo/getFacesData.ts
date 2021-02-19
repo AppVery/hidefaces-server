@@ -67,9 +67,55 @@ const getFacesPositions = (
   };
 };
 
+const getPitagorasVector = (x: number, y: number): number => {
+  return Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
+};
+
+const isQuickMovement = (
+  beforeData: Position[],
+  currentData: Position[],
+  maxVector: number
+): boolean => {
+  const getMinMaxVectorsPercentage = (
+    positions: Position[],
+    maxVector: number
+  ): { min: number; max: number } => {
+    const getVector = (position: Position): number => {
+      const { top, left, width, height } = position;
+      return getPitagorasVector(left + width / 2, top + height / 2);
+    };
+    const vectors = positions.map((position) => getVector(position));
+    return {
+      min: Math.round((Math.max(...vectors) * 100) / maxVector),
+      max: Math.round((Math.min(...vectors) * 100) / maxVector),
+    };
+  };
+  const { min: beforeMin, max: beforeMax } = getMinMaxVectorsPercentage(
+    beforeData,
+    maxVector
+  );
+  const { min: currentMin, max: currentMax } = getMinMaxVectorsPercentage(
+    currentData,
+    maxVector
+  );
+
+  //check if quick movement >10% is detect
+  const check =
+    Math.abs(currentMin - beforeMin) > 10 ||
+    Math.abs(currentMax - beforeMax) > 10;
+
+  if (check) {
+    /* eslint-disable  no-console */
+    console.log("quick movement", beforeData, currentData);
+  }
+
+  return check;
+};
+
 export const handler = async (event: Event): Promise<Response> => {
   const videoData = event.Input.Payload;
-  const interval = Math.floor(videoData.fps / 2);
+  const interval = Math.floor(videoData.fps / 3);
+  const maxVector = getPitagorasVector(videoData.width, videoData.height);
   let lastFrameWithData = 1;
 
   const facesData: Map<number, FaceDetail[]> = new Map();
@@ -114,20 +160,25 @@ export const handler = async (event: Event): Promise<Response> => {
     //if we are not in the first or last frame
     if (key > 1 && key < lastFrameWithData) {
       const beforeData = facesPositions.get(key - interval) || [];
-      const currentData = frameData || [];
       const afterData = facesPositions.get(key + interval) || [];
+      let currentData = frameData || [];
 
-      //improve before frame in case of less faces
-      if (beforeData.length < currentData.length) {
-        facesPositions.set(key - interval, [...beforeData, ...currentData]);
+      //if current frame have less faces than later
+      if (currentData.length < afterData.length) {
+        /* eslint-disable  no-console */
+        console.log("improve current frame", key);
+        currentData = [...currentData, ...afterData];
+        facesPositions.set(key, currentData);
       }
 
-      //if current frame have less faces than after and before
+      //improve before frame in case of less faces or detect quick movement
       if (
-        currentData.length < beforeData.length &&
-        currentData.length < afterData.length
+        currentData.length > beforeData.length ||
+        isQuickMovement(beforeData, currentData, maxVector)
       ) {
-        facesPositions.set(key, [...currentData, ...afterData]);
+        /* eslint-disable  no-console */
+        console.log("improve before frame", key);
+        facesPositions.set(key - interval, [...beforeData, ...currentData]);
       }
     }
   }
