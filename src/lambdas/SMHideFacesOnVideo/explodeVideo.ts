@@ -9,10 +9,7 @@ const bucketName = process.env.MAIN_BUCKET_NAME;
 
 type Event = {
   Input: {
-    Payload: {
-      s3key: string;
-      videoData: VideoData;
-    };
+    Payload: VideoData;
   };
 };
 
@@ -69,9 +66,12 @@ const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
 };
 
 export const handler = async (event: Event): Promise<VideoData> => {
-  const { s3key, videoData } = event.Input.Payload;
+  const videoData = event.Input.Payload;
 
-  const resultVideo = await generalFileService.getS3Stream(bucketName, s3key);
+  const resultVideo = await generalFileService.getS3Stream(
+    bucketName,
+    videoData.s3key
+  );
 
   if (resultVideo.isFailure) {
     throw Error(`explodeVideo: ${resultVideo.error}`);

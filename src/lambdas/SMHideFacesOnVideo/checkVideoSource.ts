@@ -14,11 +14,6 @@ type Event = {
   };
 };
 
-type Response = {
-  s3key: string;
-  videoData: VideoData;
-};
-
 const getVideoMetadata = async (s3key: string): Promise<VideoData> => {
   const [, , id, filename] = s3key.split("/");
 
@@ -41,6 +36,7 @@ const getVideoMetadata = async (s3key: string): Promise<VideoData> => {
 
   const metadata: any = await getMetadata();
   const video = metadata.streams[0];
+  const audio = metadata.streams[1];
   const fpsRate = video.r_frame_rate.split("/");
 
   return {
@@ -51,6 +47,8 @@ const getVideoMetadata = async (s3key: string): Promise<VideoData> => {
     height: video.height,
     totalFrames: video.nb_frames,
     fps: Math.ceil(parseInt(fpsRate[0]) / parseInt(fpsRate[1])),
+    s3key,
+    audio: !!audio,
   };
 };
 
@@ -147,7 +145,7 @@ const changeVideoSource = async (
   return videoS3Key;
 };
 
-export const handler = async (event: Event): Promise<Response> => {
+export const handler = async (event: Event): Promise<VideoData> => {
   const { s3key } = event.Input;
   const videoData = await getVideoMetadata(s3key);
   const { width, height } = videoData;
@@ -175,8 +173,6 @@ export const handler = async (event: Event): Promise<Response> => {
     videoData.totalFrames = Math.ceil(videoData.duration * MAX_FPS);
   }
 
-  let newS3key = s3key;
-
   if (haveWrongFPS || haveWrongSizes) {
     const maxDimension =
       Math.max(videoData.width, videoData.height) || MAX_DIMENSION;
@@ -190,13 +186,10 @@ export const handler = async (event: Event): Promise<Response> => {
       sizePercentage
     );
 
-    newS3key = videoS3Key;
+    videoData.s3key = videoS3Key;
     videoData.width = videoData.width * (sizePercentage / 100);
     videoData.height = videoData.height * (sizePercentage / 100);
   }
 
-  return {
-    s3key: newS3key,
-    videoData,
-  };
+  return videoData;
 };

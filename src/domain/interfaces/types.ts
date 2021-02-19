@@ -6,4 +6,6 @@ export type VideoData = {
   height: number;
   totalFrames: number;
   fps: number;
+  audio: boolean;
+  s3key: string;
 };
