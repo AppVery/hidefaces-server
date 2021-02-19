@@ -4,6 +4,7 @@ import * as ffmpeg from "fluent-ffmpeg";
 import * as fs from "fs";
 
 const bucketName = process.env.MAIN_BUCKET_NAME;
+const MAX_DURATION = 30;
 const MAX_FPS = 30;
 const MAX_DIMENSION = 1920; //HD 1920x1080
 
@@ -102,6 +103,10 @@ export const handler = async (event: Event): Promise<Response> => {
     totalFrames: video.nb_frames,
     fps: Math.ceil(parseInt(fpsRate[0]) / parseInt(fpsRate[1])),
   };
+
+  if (video.duration > MAX_DURATION + 1) {
+    throw Error("max duration error");
+  }
 
   const haveWrongFPS = videoData.fps > MAX_FPS;
 
