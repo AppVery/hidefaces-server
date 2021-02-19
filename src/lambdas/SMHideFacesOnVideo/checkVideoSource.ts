@@ -19,58 +19,7 @@ type Response = {
   videoData: VideoData;
 };
 
-const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
-  if (fs.existsSync(tmpPath)) {
-    fs.rmdirSync(tmpPath, { recursive: true });
-  }
-  await fs.promises.mkdir(tmpPath);
-};
-
-const changeVideoSource = async (
-  videoData: VideoData,
-  s3key: string,
-  fps = 30,
-  percentage = 100
-): Promise<string> => {
-  const tmpPath = `/tmp/${videoData.id}`;
-  const newVideoPath = `${tmpPath}/${videoData.filename}`;
-
-  await makeCleanTemporalFolder(tmpPath);
-
-  const resultVideo = await generalFileService.getS3Stream(bucketName, s3key);
-
-  if (resultVideo.isFailure) {
-    throw Error(`explodeVideo: ${resultVideo.error}`);
-  }
-
-  const changeVideo = async () => {
-    return new Promise((resolve, reject) => {
-      ffmpeg(resultVideo.value)
-        .on("end", function () {
-          resolve("ok");
-        })
-        .on("error", function (err: any) {
-          reject(err);
-        })
-        .size(`${percentage}%`)
-        .outputFPS(fps)
-        .outputOptions("-movflags frag_keyframe+empty_moov")
-        .save(newVideoPath);
-    });
-  };
-
-  await changeVideo();
-
-  //save video
-  const videoBuffer = await fs.promises.readFile(newVideoPath);
-  const videoS3Key = `videos/temporal/${videoData.id}/${videoData.filename}`;
-  await generalFileService.saveBuffer(bucketName, videoS3Key, videoBuffer);
-
-  return videoS3Key;
-};
-
-export const handler = async (event: Event): Promise<Response> => {
-  const { s3key } = event.Input;
+const getVideoMetadata = async (s3key: string): Promise<VideoData> => {
   const [, , id, filename] = s3key.split("/");
 
   const resultVideo = await generalFileService.getS3Stream(bucketName, s3key);
@@ -92,27 +41,134 @@ export const handler = async (event: Event): Promise<Response> => {
 
   const metadata: any = await getMetadata();
   const video = metadata.streams[0];
-  const { width, height } = video;
   const fpsRate = video.r_frame_rate.split("/");
-  const videoData = {
+
+  return {
     id,
     filename,
     duration: video.duration,
-    width,
-    height,
+    width: video.width,
+    height: video.height,
     totalFrames: video.nb_frames,
     fps: Math.ceil(parseInt(fpsRate[0]) / parseInt(fpsRate[1])),
   };
+};
 
-  if (video.duration > MAX_DURATION + 1) {
+const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
+  if (fs.existsSync(tmpPath)) {
+    fs.rmdirSync(tmpPath, { recursive: true });
+  }
+  await fs.promises.mkdir(tmpPath);
+};
+
+const getVideoFrameDimensions = async (
+  videoData: VideoData,
+  s3key: string
+): Promise<{ width: number; height: number }> => {
+  const folder = `/tmp/${videoData.id}`;
+  const filename = `${videoData.id}-screenshot.png`;
+  const screenshotPath = `${folder}/${filename}`;
+  const videoPath = `${folder}/temporal-video-${videoData.filename}`;
+
+  const resultVideo = await generalFileService.getS3Buffer(bucketName, s3key);
+
+  if (resultVideo.isFailure) {
+    throw Error(`getVideoDimensions: ${resultVideo.error}`);
+  }
+
+  await fs.promises.writeFile(videoPath, resultVideo.value);
+
+  const getVideoFrame = async () => {
+    return new Promise((resolve, reject) => {
+      ffmpeg(videoPath)
+        .on("end", function () {
+          resolve("ok");
+        })
+        .on("error", function (err: any) {
+          reject(err);
+        })
+        .screenshots({
+          count: 1,
+          timestamps: [1],
+          filename,
+          folder,
+        });
+    });
+  };
+
+  await getVideoFrame();
+
+  /* eslint-disable @typescript-eslint/no-var-requires */
+  const imageSize = require("image-size");
+  const dimensions = imageSize(screenshotPath);
+
+  await fs.promises.unlink(screenshotPath);
+  await fs.promises.unlink(videoPath);
+
+  return dimensions;
+};
+
+const changeVideoSource = async (
+  videoData: VideoData,
+  s3key: string,
+  percentage = 100
+): Promise<string> => {
+  const newVideoPath = `/tmp/${videoData.id}/${videoData.filename}`;
+
+  const resultVideo = await generalFileService.getS3Stream(bucketName, s3key);
+
+  if (resultVideo.isFailure) {
+    throw Error(`explodeVideo: ${resultVideo.error}`);
+  }
+
+  const changeVideo = async () => {
+    return new Promise((resolve, reject) => {
+      ffmpeg(resultVideo.value)
+        .on("end", function () {
+          resolve("ok");
+        })
+        .on("error", function (err: any) {
+          reject(err);
+        })
+        .size(`${percentage}%`)
+        .outputFPS(videoData.fps)
+        .outputOptions("-movflags frag_keyframe+empty_moov")
+        .save(newVideoPath);
+    });
+  };
+
+  await changeVideo();
+
+  //save video
+  const videoBuffer = await fs.promises.readFile(newVideoPath);
+  const videoS3Key = `videos/temporal/${videoData.id}/${videoData.filename}`;
+  await generalFileService.saveBuffer(bucketName, videoS3Key, videoBuffer);
+
+  return videoS3Key;
+};
+
+export const handler = async (event: Event): Promise<Response> => {
+  const { s3key } = event.Input;
+  const videoData = await getVideoMetadata(s3key);
+  const { width, height } = videoData;
+  const tmpPath = `/tmp/${videoData.id}`;
+
+  if (videoData.duration > MAX_DURATION + 1) {
     throw Error("max duration error");
   }
 
-  const haveWrongFPS = videoData.fps > MAX_FPS;
+  await makeCleanTemporalFolder(tmpPath);
 
-  //TODOOOOOOOO get real dimensions with a frame like on explodeVideo
+  if (!width || !height) {
+    const dimensions = await getVideoFrameDimensions(videoData, s3key);
+
+    videoData.width = dimensions.width;
+    videoData.height = dimensions.height;
+  }
+
+  const haveWrongFPS = videoData.fps > MAX_FPS;
   const haveWrongSizes =
-    !width || !height || width > MAX_DIMENSION || height > MAX_DIMENSION;
+    videoData.width > MAX_DIMENSION || videoData.height > MAX_DIMENSION;
 
   if (!videoData.fps || haveWrongFPS) {
     videoData.fps = MAX_FPS;
@@ -122,21 +178,21 @@ export const handler = async (event: Event): Promise<Response> => {
   let newS3key = s3key;
 
   if (haveWrongFPS || haveWrongSizes) {
-    const fps = Math.min(videoData.fps, MAX_FPS);
-    const maxDimension = Math.max(width, height) || MAX_DIMENSION;
+    const maxDimension =
+      Math.max(videoData.width, videoData.height) || MAX_DIMENSION;
     const sizePercentage = haveWrongSizes
       ? Math.round((MAX_DIMENSION * 100) / maxDimension)
       : 100;
+
     const videoS3Key = await changeVideoSource(
       videoData,
       s3key,
-      fps,
       sizePercentage
     );
+
     newS3key = videoS3Key;
-    //check real dimensions on next step: explodeVideo
-    videoData.width = null;
-    videoData.height = null;
+    videoData.width = videoData.width * (sizePercentage / 100);
+    videoData.height = videoData.height * (sizePercentage / 100);
   }
 
   return {

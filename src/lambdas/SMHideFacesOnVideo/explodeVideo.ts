@@ -46,10 +46,18 @@ const waitWatcher = async (tmpPath: string) => {
 };
 
 const saveAudioOnS3 = async (id: string, path: string): Promise<void> => {
+  /* eslint-disable  no-console */
+  console.log("saving audio... ");
   const audioBuffer = await fs.promises.readFile(path);
   const audioS3Key = `videos/temporal/${id}/audio.mp3`;
+  /* eslint-disable  no-console */
+  console.log("buffer", audioBuffer);
+  if (audioBuffer) {
+    /* eslint-disable  no-console */
+    console.log("saving audio... on S3 ");
+    await generalFileService.saveBuffer(bucketName, audioS3Key, audioBuffer);
+  }
 
-  await generalFileService.saveBuffer(bucketName, audioS3Key, audioBuffer);
   await fs.promises.unlink(path);
 };
 
@@ -97,16 +105,6 @@ export const handler = async (event: Event): Promise<VideoData> => {
   await saveAudioOnS3(videoData.id, audioPath);
 
   await waitWatcher(tmpPath);
-
-  if (!videoData.width || !videoData.height) {
-    const frameS3key = `videos/temporal/${videoData.id}/frame-1.png`;
-    const frame = await generalFileService.getS3Buffer(bucketName, frameS3key);
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const imageSize = require("image-size");
-    const dimensions = imageSize(frame.value);
-    videoData.width = dimensions.width;
-    videoData.height = dimensions.height;
-  }
 
   return videoData;
 };
