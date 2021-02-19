@@ -1,7 +1,7 @@
 Comment: A step functions to hide faces on a video
-StartAt: getVideoMetadata
+StartAt: checkVideoSource
 States:
-  getVideoMetadata:
+  checkVideoSource:
     Type: Task
     Resource: arn:aws:states:::lambda:invoke
     Parameters:
@@ -13,7 +13,7 @@ States:
               [
                 "arn:aws:lambda:eu-west-1",
                 { "Ref": "AWS::AccountId" },
-                "function:${self:service}-${self:provider.stage}-getVideoMetadata",
+                "function:${self:service}-${self:provider.stage}-checkVideoSource",
               ],
             ],
         }
