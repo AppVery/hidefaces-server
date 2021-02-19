@@ -54,9 +54,9 @@ functions:
           rules:
             - prefix: videos/source/
           existing: true
-  getVideoMetadata:
-    handler: src/lambdas/SMHideFacesOnVideo/getVideoMetadata.handler
-    timeout: 200
+  checkVideoSource:
+    handler: src/lambdas/SMHideFacesOnVideo/checkVideoSource.handler
+    timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
   explodeVideo:
