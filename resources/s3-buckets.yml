@@ -2,7 +2,7 @@ Resources:
   MainBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: ${self:custom.prefix}-main
+      BucketName: ${self:custom.mainBucketName}
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays: 1

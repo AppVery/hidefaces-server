@@ -8,9 +8,15 @@ custom:
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:service}-${self:custom.stage}
   myProfile:
-    prod: hidefaces-prod
-    dev: hidefaces-dev
+    prod: general-prod
+    dev: general-dev
   useDotenv: true
+  mainBucketName:
+    Fn::Join:
+      - "-"
+      - - ${self:custom.prefix}
+        - !Ref AWS::AccountId
+        - "main"
   ffmpegLayer:
     Fn::Join:
       - ":"

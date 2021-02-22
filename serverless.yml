@@ -49,7 +49,7 @@ functions:
     handler: src/lambdas/videoUploaded.handler
     events:
       - s3:
-          bucket: ${self:custom.prefix}-main
+          bucket: ${self:custom.mainBucketName}
           event: s3:ObjectCreated:Put
           rules:
             - prefix: videos/source/
