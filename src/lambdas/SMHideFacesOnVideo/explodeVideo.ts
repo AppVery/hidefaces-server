@@ -43,15 +43,9 @@ const waitWatcher = async (tmpPath: string) => {
 };
 
 const saveAudioOnS3 = async (id: string, path: string): Promise<void> => {
-  /* eslint-disable  no-console */
-  console.log("saving audio... ");
   const audioBuffer = await fs.promises.readFile(path);
   const audioS3Key = `videos/temporal/${id}/audio.mp3`;
-  /* eslint-disable  no-console */
-  console.log("buffer", audioBuffer);
   if (audioBuffer) {
-    /* eslint-disable  no-console */
-    console.log("saving audio... on S3 ");
     await generalFileService.saveBuffer(bucketName, audioS3Key, audioBuffer);
   }
 
@@ -100,9 +94,27 @@ export const handler = async (event: Event): Promise<VideoData> => {
     });
   };
 
-  await explodeVideo();
+  const explodeMuteVideo = async () => {
+    return new Promise((resolve, reject) => {
+      ffmpeg(resultVideo.value)
+        .on("end", async function () {
+          resolve("ok");
+        })
+        .on("error", function (err: any) {
+          reject(err);
+        })
+        .output(framesPath)
+        .run();
+    });
+  };
 
-  await saveAudioOnS3(videoData.id, audioPath);
+  if (videoData.audio) {
+    await explodeVideo();
+
+    await saveAudioOnS3(videoData.id, audioPath);
+  } else {
+    await explodeMuteVideo();
+  }
 
   await waitWatcher(tmpPath);
 

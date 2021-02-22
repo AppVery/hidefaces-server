@@ -34,12 +34,6 @@ export const handler = async (event: Event): Promise<Response> => {
 
   await makeCleanTemporalFolder(tmpPath);
 
-  const resultAudio = await generalFileService.getS3Buffer(
-    bucketName,
-    audioS3Key
-  );
-  await fs.promises.writeFile(audioPath, resultAudio.value);
-
   let i = 1;
   const imagesStream = new Readable({
     async read() {
@@ -80,7 +74,32 @@ export const handler = async (event: Event): Promise<Response> => {
     });
   };
 
-  await makeVideo();
+  const makeMuteVideo = async () => {
+    return new Promise((resolve, reject) => {
+      ffmpeg(imagesStream)
+        .inputFPS(videoData.fps)
+        .on("end", function () {
+          resolve("ok");
+        })
+        .on("error", function (err: any) {
+          reject(err);
+        })
+        .outputOptions("-pix_fmt yuv420p")
+        .save(videoPath);
+    });
+  };
+
+  if (videoData.audio) {
+    const resultAudio = await generalFileService.getS3Buffer(
+      bucketName,
+      audioS3Key
+    );
+    await fs.promises.writeFile(audioPath, resultAudio.value);
+
+    await makeVideo();
+  } else {
+    await makeMuteVideo();
+  }
 
   //save video
   const videoBuffer = await fs.promises.readFile(videoPath);
