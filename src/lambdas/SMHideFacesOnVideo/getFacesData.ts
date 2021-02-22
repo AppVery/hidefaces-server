@@ -33,7 +33,7 @@ const getFacesPositions = (
   const frameHeight = videoData.height;
   const maxWidth = videoData.width;
   const maxHeight = videoData.height;
-  const INC_FACES_BOX = 2;
+  const INC_FACES_BOX = 1.8;
   const { Top, Left, Width, Height } = BoundingBox;
   const top = Math.floor(
     Top * frameHeight +
@@ -46,8 +46,8 @@ const getFacesPositions = (
       (Width * frameWidth * INC_FACES_BOX) / 2
   );
   const positions = {
-    top: Math.min(parsePositiveNumber(top), maxHeight),
-    left: Math.min(parsePositiveNumber(left), maxWidth),
+    top: Math.min(Math.abs(top), maxHeight),
+    left: Math.min(Math.abs(left), maxWidth),
     width: Math.floor(Width * frameWidth * INC_FACES_BOX),
     height: Math.floor(Height * frameHeight * INC_FACES_BOX),
   };
