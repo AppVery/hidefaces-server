@@ -21,6 +21,14 @@ const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
   await fs.promises.mkdir(tmpPath);
 };
 
+const getDurationTag = (video: any) => {
+  if (video.tags && video.tags.DURATION) {
+    const data = video.tags.DURATION.split(":");
+    return data[2] ? parseFloat(data[2]) : MAX_DURATION;
+  }
+  return MAX_DURATION;
+};
+
 const getVideoMetadata = async (s3key: string): Promise<VideoData> => {
   const [, , id, filename] = s3key.split("/");
 
@@ -46,12 +54,14 @@ const getVideoMetadata = async (s3key: string): Promise<VideoData> => {
   const audio = metadata.streams[1];
   const fpsRate = video.r_frame_rate.split("/");
   const duration =
-    video.duration !== "N/A"
-      ? video.duration
-      : parseFloat(video.tags.DURATION.split(":")[2]);
+    !video.duration || "N/A" === video.duration
+      ? getDurationTag(video)
+      : video.duration;
   const fps = Math.ceil(parseInt(fpsRate[0]) / parseInt(fpsRate[1]));
   const totalFrames =
-    video.nb_frames !== "N/A" ? video.nb_frames : Math.ceil(duration * fps);
+    !video.nb_frames || "N/A" === video.nb_frames
+      ? Math.ceil(duration * fps)
+      : video.nb_frames;
 
   return {
     id,
