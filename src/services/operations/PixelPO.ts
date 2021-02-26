@@ -24,7 +24,7 @@ export class Pixel extends PositionsOperations {
     const resultPixelation = await this.service.makePixelation(
       resultExtract.value,
       position.width,
-      15
+      12
     );
 
     if (resultPixelation.isFailure) {

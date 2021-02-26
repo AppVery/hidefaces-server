@@ -114,7 +114,7 @@ const isQuickMovement = (
 
 export const handler = async (event: Event): Promise<Response> => {
   const videoData = event.Input.Payload;
-  const interval = Math.floor(videoData.fps / 3);
+  const interval = 6;
   const maxVector = getPitagorasVector(videoData.width, videoData.height);
   let lastFrameWithData = 1;
 
