@@ -33,7 +33,7 @@ export const parseEmail = (label: string, data: unknown): string => {
 };
 
 const isValidVideoType = (type: unknown): type is string => {
-  const validVideoTypes = ["mp4", "mkv"];
+  const validVideoTypes = ["mp4", "mkv", "mov", "webm"];
 
   return isString(type) && validVideoTypes.includes(type);
 };
