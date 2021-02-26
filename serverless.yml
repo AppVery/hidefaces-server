@@ -56,6 +56,7 @@ functions:
           existing: true
   checkVideoSource:
     handler: src/lambdas/SMHideFacesOnVideo/checkVideoSource.handler
+    memorySize: 1792
     timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
