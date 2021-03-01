@@ -7,7 +7,11 @@ import {
   parseEmail,
   parseString,
   parseExtension,
+  parseNumber,
 } from "../utils/validations";
+
+const MIN_PRICE = 100;
+const MAX_PRICE = 500;
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -18,7 +22,8 @@ export const handler = async (
     if (
       !hasValue(body.email) ||
       !hasValue(body.token) ||
-      !hasValue(body.filename)
+      !hasValue(body.filename) ||
+      !hasValue(body.quantity)
     ) {
       throw new Error("Invalid request");
     }
@@ -27,7 +32,12 @@ export const handler = async (
       email: parseEmail("email", body.email),
       token: parseString("token", body.token),
       extension: parseExtension("filename", body.filename),
+      quantity: parseNumber("quantity", body.quantity),
     };
+
+    if (request.quantity < MIN_PRICE || request.quantity > MAX_PRICE) {
+      throw new Error("Invalid amount");
+    }
 
     const result = await useCase.execute(request);
 

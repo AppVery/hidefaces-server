@@ -33,9 +33,9 @@ export class Payment implements UseCase<Request, Response> {
   }
 
   public async execute(request: Request): Promise<Result<Response>> {
-    const { email, token, extension } = request;
+    const { email, token, extension, quantity } = request;
 
-    const resultMakePayment = await this.makePayment(token);
+    const resultMakePayment = await this.makePayment(token, quantity);
 
     if (resultMakePayment.isFailure) {
       return Result.fail<Response>(
@@ -67,12 +67,13 @@ export class Payment implements UseCase<Request, Response> {
   }
 
   private async makePayment(
-    token: string
+    token: string,
+    quantity: number
   ): Promise<Result<{ id: string; zip: string }>> {
     try {
       const charge = await this.stripe.charges.create({
         source: token,
-        amount: 150,
+        amount: quantity,
         description: "HideFaces.app",
         currency: "eur",
       });
