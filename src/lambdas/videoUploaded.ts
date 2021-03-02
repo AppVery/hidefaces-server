@@ -8,8 +8,12 @@ export const handler = async (
   event: S3Event
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const s3key = event.Records[0].s3.object.key;
+    const [, , id, filename] = s3key.split("/");
     const data = {
-      s3key: event.Records[0].s3.object.key,
+      id,
+      filename,
+      s3key,
     };
 
     const params = {

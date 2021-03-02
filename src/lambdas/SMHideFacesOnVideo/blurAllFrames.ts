@@ -11,6 +11,7 @@ const imageService = new SharpImageService();
 type Event = {
   Input: {
     Payload: {
+      id: string;
       videoData: VideoData;
       framesData: string;
     };

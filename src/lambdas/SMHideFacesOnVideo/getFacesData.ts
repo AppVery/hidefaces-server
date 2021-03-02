@@ -21,6 +21,7 @@ type Event = {
 };
 
 type Response = {
+  id: string;
   videoData: VideoData;
   framesData: string;
 };
@@ -203,5 +204,5 @@ export const handler = async (event: Event): Promise<Response> => {
     mapper: [...mapper],
   });
 
-  return { videoData, framesData };
+  return { id: videoData.id, videoData, framesData };
 };

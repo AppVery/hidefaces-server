@@ -10,6 +10,8 @@ const MAX_DIMENSION = 1920; //HD 1920x1080
 
 type Event = {
   Input: {
+    id: string;
+    filename: string;
     s3key: string;
   };
 };
@@ -29,9 +31,11 @@ const getDurationTag = (video: any) => {
   return MAX_DURATION;
 };
 
-const getVideoMetadata = async (s3key: string): Promise<VideoData> => {
-  const [, , id, filename] = s3key.split("/");
-
+const getVideoMetadata = async (
+  id: string,
+  filename: string,
+  s3key: string
+): Promise<VideoData> => {
   const resultVideo = await generalFileService.getS3Stream(bucketName, s3key);
 
   if (resultVideo.isFailure) {
@@ -165,8 +169,8 @@ const changeVideoSource = async (
 };
 
 export const handler = async (event: Event): Promise<VideoData> => {
-  const { s3key } = event.Input;
-  const videoData = await getVideoMetadata(s3key);
+  const { id, filename, s3key } = event.Input;
+  const videoData = await getVideoMetadata(id, filename, s3key);
   const { width, height } = videoData;
   const tmpPath = `/tmp/${videoData.id}`;
 
