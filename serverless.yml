@@ -81,8 +81,8 @@ functions:
     timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
-  sendEmail:
-    handler: src/lambdas/SMHideFacesOnVideo/sendEmail.handler
+  notifySuccess:
+    handler: src/lambdas/SMHideFacesOnVideo/notifySuccess.handler
   notifyError:
     handler: src/lambdas/SMHideFacesOnVideo/notifyError.handler
 

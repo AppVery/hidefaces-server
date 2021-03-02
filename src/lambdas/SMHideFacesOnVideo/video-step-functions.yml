@@ -100,8 +100,8 @@ States:
                 }
               Payload:
                 Input.$: "$"
-            Next: sendEmail
-          sendEmail:
+            Next: notifySuccess
+          notifySuccess:
             Type: Task
             Resource: arn:aws:states:::lambda:invoke
             Parameters:
@@ -113,7 +113,7 @@ States:
                       [
                         "arn:aws:lambda:eu-west-1",
                         { "Ref": "AWS::AccountId" },
-                        "function:${self:service}-${self:provider.stage}-sendEmail",
+                        "function:${self:service}-${self:provider.stage}-notifySuccess",
                       ],
                     ],
                 }
