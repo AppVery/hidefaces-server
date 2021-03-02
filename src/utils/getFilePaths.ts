@@ -21,8 +21,8 @@ const s3TmpFrame = (id: string, index: number): string => {
   return `${S3_VIDEO_TEMPORAL}/${id}/frame-${index.toString()}.png`;
 };
 
-const s3FinalVideo = (id: string, filename: string): string => {
-  return `${S3_VIDEO_FINAL}/${id}/${filename}`;
+const s3FinalVideo = (id: string, extension: string): string => {
+  return `${S3_VIDEO_FINAL}/${id}/${id}.${extension}`;
 };
 
 const localFolder = (id: string): string => {

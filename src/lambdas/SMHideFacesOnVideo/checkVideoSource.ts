@@ -3,6 +3,7 @@ import { VideoData } from "../../domain/interfaces/types";
 import getFilePaths, {
   makeCleanTemporalFolder,
 } from "../../utils/getFilePaths";
+import { parseExtension } from "../../utils/validations";
 import * as ffmpeg from "fluent-ffmpeg";
 import * as fs from "fs";
 
@@ -66,6 +67,7 @@ const getVideoMetadata = async (
   return {
     id,
     filename,
+    extension: parseExtension("filename", filename),
     duration,
     width: video.width,
     height: video.height,

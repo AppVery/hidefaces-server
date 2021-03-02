@@ -93,7 +93,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
 
   //save video
   const videoBuffer = await fs.promises.readFile(videoPath);
-  const s3key = getFilePaths.s3FinalVideo(id, videoData.filename);
+  const s3key = getFilePaths.s3FinalVideo(id, videoData.extension);
   await generalFileService.saveBuffer(bucketName, s3key, videoBuffer);
 
   return videoData;

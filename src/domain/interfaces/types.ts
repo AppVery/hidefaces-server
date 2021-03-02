@@ -1,6 +1,7 @@
 export type VideoData = {
   id: string;
   filename: string;
+  extension: string;
   duration: number;
   width: number;
   height: number;

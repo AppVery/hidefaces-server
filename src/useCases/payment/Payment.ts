@@ -45,9 +45,14 @@ export class Payment implements UseCase<Request, Response> {
       );
     }
 
-    const { id, zip } = resultMakePayment.value;
+    const { id } = resultMakePayment.value;
 
-    const resultSaveData = await this.saveOperation(id, email, extension, zip);
+    const resultSaveData = await this.saveOperation(
+      id,
+      email,
+      extension,
+      quantity
+    );
 
     if (resultSaveData.isFailure) {
       return Result.fail<Response>(resultSaveData.error, resultSaveData.code);
@@ -93,7 +98,7 @@ export class Payment implements UseCase<Request, Response> {
     id: string,
     email: string,
     extension: string,
-    zip: string
+    quantity: number
   ): Promise<Result<void>> {
     try {
       const input: PutItemCommandInput = {
@@ -102,7 +107,7 @@ export class Payment implements UseCase<Request, Response> {
           pk: { S: `PY-${id}` },
           email: { S: email },
           extension: { S: extension },
-          zip: { S: zip },
+          quantity: { N: quantity.toString() },
           createdAt: { S: Date.now().toString() },
         },
       };

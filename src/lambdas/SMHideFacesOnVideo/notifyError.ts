@@ -1,11 +1,11 @@
+import { notifyError } from "../../useCases/notify";
+import { Request } from "../../useCases/notify/requestResponseDTO";
+
 type Event = {
   Input: {
     id: string;
     error: {
-      Cause: {
-        errorMessage: string;
-        trace: string[];
-      };
+      Cause: string;
     };
   };
 };
@@ -13,11 +13,17 @@ type Event = {
 export const handler = async (event: Event): Promise<void> => {
   const {
     id,
-    error: {
-      Cause: { errorMessage, trace },
-    },
+    error: { Cause },
   } = event.Input;
 
-  /* eslint-disable  no-console */
-  console.log("data", id, errorMessage, trace, event.Input);
+  const request: Request = {
+    id,
+    error: Cause,
+  };
+
+  const result = await notifyError.execute(request);
+
+  if (result.isFailure) {
+    throw Error(result.error);
+  }
 };
