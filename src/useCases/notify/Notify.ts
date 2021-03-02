@@ -24,8 +24,9 @@ export abstract class Notify implements UseCase<Request, Response> {
   protected ses: SESClient;
   protected fileService: FileService;
   protected id: string;
-  protected ADMIN_EMAIL = "info@hidefaces.app";
   protected APP_NAME = "HideFaces.app";
+  protected ADMIN_EMAIL = "admin@hidefaces.app";
+  private INFO_EMAIL = "info@hidefaces.app";
 
   constructor(
     database: DynamoDBClient,
@@ -94,7 +95,7 @@ export abstract class Notify implements UseCase<Request, Response> {
           },
           Subject: { Data: subject },
         },
-        Source: this.ADMIN_EMAIL,
+        Source: this.INFO_EMAIL,
       };
 
       await this.ses.send(new SendEmailCommand(emailInput));

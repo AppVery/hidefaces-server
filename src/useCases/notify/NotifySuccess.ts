@@ -35,16 +35,16 @@ export class NotifySuccess extends Notify {
 
     const url = resultUrl.value;
 
-    const resultNotifyClient = await this.notifyClient(email, url);
-
-    if (resultNotifyClient.isFailure) {
-      return Result.combineFail(resultNotifyClient, "[CLIENT notify success]");
-    }
-
     const resultNotifyAdmin = await this.notifyAdmin(quantity);
 
     if (resultNotifyAdmin.isFailure) {
       return Result.combineFail(resultNotifyAdmin, "[ADMIN notify success]");
+    }
+
+    const resultNotifyClient = await this.notifyClient(email, url);
+
+    if (resultNotifyClient.isFailure) {
+      return Result.combineFail(resultNotifyClient, "[CLIENT notify success]");
     }
 
     return Result.ok<void>();

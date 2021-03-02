@@ -26,16 +26,16 @@ export class NotifyError extends Notify {
 
     const { email } = resultData.value;
 
-    const resultNotifyClient = await this.notifyClient(email);
-
-    if (resultNotifyClient.isFailure) {
-      return Result.combineFail(resultNotifyClient, "[CLIENT notify error]");
-    }
-
     const resultNotifyAdmin = await this.notifyAdmin(error);
 
     if (resultNotifyAdmin.isFailure) {
       return Result.combineFail(resultNotifyAdmin, "[ADMIN notify error]");
+    }
+
+    const resultNotifyClient = await this.notifyClient(email);
+
+    if (resultNotifyClient.isFailure) {
+      return Result.combineFail(resultNotifyClient, "[CLIENT notify error]");
     }
 
     return Result.ok<void>();
