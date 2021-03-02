@@ -1,4 +1,6 @@
 import { generalFileService } from "../../services";
+import { VideoData } from "../../domain/interfaces/types";
+import getFilePaths from "../../utils/getFilePaths";
 import {
   DynamoDBClient,
   GetItemCommand,
@@ -18,15 +20,13 @@ const EXPIRATION_TIME = 60 * 60 * 24; //1 day
 
 type Event = {
   Input: {
-    Payload: {
-      videoS3Key: string;
-      id: string;
-    };
+    Payload: VideoData;
   };
 };
 
 export const handler = async (event: Event): Promise<void> => {
-  const { id, videoS3Key } = event.Input.Payload;
+  const { id, filename } = event.Input.Payload;
+  const s3Key = getFilePaths.s3FinalVideo(id, filename);
 
   const dbInput: GetItemCommandInput = {
     TableName: process.env.MAIN_TABLE_NAME,
@@ -41,7 +41,7 @@ export const handler = async (event: Event): Promise<void> => {
 
   const resultUrl = await generalFileService.getTempDownloadUrl(
     bucketName,
-    videoS3Key,
+    s3Key,
     newFileName,
     EXPIRATION_TIME
   );

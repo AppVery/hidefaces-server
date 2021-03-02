@@ -1,6 +1,9 @@
 import { generalFileService } from "../../services";
 import { VideoData } from "../../domain/interfaces/types";
 import { Readable } from "stream";
+import getFilePaths, {
+  makeCleanTemporalFolder,
+} from "../../utils/getFilePaths";
 import * as ffmpeg from "fluent-ffmpeg";
 import * as fs from "fs";
 
@@ -12,34 +15,21 @@ type Event = {
   };
 };
 
-type Response = {
-  videoS3Key: string;
-  id: string;
-};
-
-const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
-  if (fs.existsSync(tmpPath)) {
-    fs.rmdirSync(tmpPath, { recursive: true });
-  }
-  await fs.promises.mkdir(tmpPath);
-};
-
-export const handler = async (event: Event): Promise<Response> => {
+export const handler = async (event: Event): Promise<VideoData> => {
   const videoData = event.Input.Payload;
   const id = videoData.id;
-  const audioS3Key = `videos/temporal/${id}/audio.mp3`;
-  const tmpPath = `/tmp/${id}`;
-  const videoPath = `${tmpPath}/${videoData.filename}`;
-  const audioPath = `${tmpPath}/audio.mp3`;
+  const audioS3Key = getFilePaths.s3TmpAudio(id);
+  const videoPath = getFilePaths.localFile(id, videoData.filename);
+  const audioPath = getFilePaths.localAudio(id);
 
-  await makeCleanTemporalFolder(tmpPath);
+  await makeCleanTemporalFolder(id);
 
   let i = 1;
   const imagesStream = new Readable({
     async read() {
       let error: boolean;
       do {
-        const s3key = `videos/temporal/${id}/frame-${i}.png`;
+        const s3key = getFilePaths.s3TmpFrame(id, i);
         const frame = await generalFileService.getS3Buffer(bucketName, s3key);
         if (frame.isSuccess) {
           this.push(frame.value);
@@ -103,8 +93,8 @@ export const handler = async (event: Event): Promise<Response> => {
 
   //save video
   const videoBuffer = await fs.promises.readFile(videoPath);
-  const videoS3Key = `videos/final/${id}/${videoData.filename}`;
-  await generalFileService.saveBuffer(bucketName, videoS3Key, videoBuffer);
+  const s3key = getFilePaths.s3FinalVideo(id, videoData.filename);
+  await generalFileService.saveBuffer(bucketName, s3key, videoBuffer);
 
-  return { videoS3Key, id: videoData.id };
+  return videoData;
 };

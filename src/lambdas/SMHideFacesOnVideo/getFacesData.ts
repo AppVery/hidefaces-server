@@ -1,6 +1,6 @@
 import { VideoData } from "../../domain/interfaces/types";
 import { Position } from "../../domain/interfaces/imageService";
-import { parsePositiveNumber } from "../../utils/validations";
+import getFilePaths from "../../utils/getFilePaths";
 import { AwsRekognitionService } from "../../services/AwsRekognitionService";
 import {
   RekognitionClient,
@@ -122,7 +122,7 @@ export const handler = async (event: Event): Promise<Response> => {
   const facesData: Map<number, FaceDetail[]> = new Map();
 
   for (let i = 1; i <= videoData.totalFrames; i += interval) {
-    const s3key = `videos/temporal/${videoData.id}/frame-${i}.png`;
+    const s3key = getFilePaths.s3TmpFrame(videoData.id, i);
     const result = await awsRekognitionService.getDataFacesImageS3(
       s3key,
       bucketName

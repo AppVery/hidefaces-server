@@ -1,6 +1,7 @@
 import { Request, Response } from "./requestResponseDTO";
 import { Result } from "../../domain/Result";
 import { UseCase } from "../../domain/useCase";
+import getFilePaths from "../../utils/getFilePaths";
 import {
   DynamoDBClient,
   PutItemCommand,
@@ -120,7 +121,7 @@ export class Payment implements UseCase<Request, Response> {
     try {
       const input: PutObjectCommandInput = {
         Bucket: process.env.MAIN_BUCKET_NAME,
-        Key: `videos/source/${id}/${id}.${extension}`,
+        Key: getFilePaths.s3SourceVideo(id, extension),
       };
       const url = await this.getTempUrl(this.s3, new PutObjectCommand(input), {
         expiresIn: 60,

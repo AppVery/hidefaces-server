@@ -1,5 +1,8 @@
 import { generalFileService } from "../../services";
 import { VideoData } from "../../domain/interfaces/types";
+import getFilePaths, {
+  makeCleanTemporalFolder,
+} from "../../utils/getFilePaths";
 import * as ffmpeg from "fluent-ffmpeg";
 import * as fs from "fs";
 
@@ -14,13 +17,6 @@ type Event = {
     filename: string;
     s3key: string;
   };
-};
-
-const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
-  if (fs.existsSync(tmpPath)) {
-    fs.rmdirSync(tmpPath, { recursive: true });
-  }
-  await fs.promises.mkdir(tmpPath);
 };
 
 const getDurationTag = (video: any) => {
@@ -84,10 +80,11 @@ const getVideoFrameDimensions = async (
   videoData: VideoData,
   s3key: string
 ): Promise<{ width: number; height: number }> => {
-  const folder = `/tmp/${videoData.id}`;
-  const filename = `${videoData.id}-screenshot.png`;
-  const screenshotPath = `${folder}/${filename}`;
-  const videoPath = `${folder}/temporal-video-${videoData.filename}`;
+  const { id, filename } = videoData;
+  const folder = getFilePaths.localFolder(id);
+  const videoPath = getFilePaths.localFile(id, filename);
+  const screenshotFilename = `${id}-screenshot.png`;
+  const screenshotPath = getFilePaths.localFile(id, screenshotFilename);
 
   const resultVideo = await generalFileService.getS3Buffer(bucketName, s3key);
 
@@ -109,7 +106,7 @@ const getVideoFrameDimensions = async (
         .screenshots({
           count: 1,
           timestamps: [1],
-          filename,
+          filename: screenshotFilename,
           folder,
         });
     });
@@ -132,8 +129,11 @@ const changeVideoSource = async (
   s3key: string,
   percentage = 100
 ): Promise<string> => {
-  const originalVideoPath = `/tmp/${videoData.id}/original-${videoData.filename}`;
-  const newVideoPath = `/tmp/${videoData.id}/${videoData.filename}`;
+  const originalVideoPath = getFilePaths.localFile(
+    videoData.id,
+    `original-${videoData.filename}`
+  );
+  const newVideoPath = getFilePaths.localFile(videoData.id, videoData.filename);
   const resultVideo = await generalFileService.getS3Buffer(bucketName, s3key);
 
   if (resultVideo.isFailure) {
@@ -162,7 +162,7 @@ const changeVideoSource = async (
 
   //save video
   const videoBuffer = await fs.promises.readFile(newVideoPath);
-  const videoS3Key = `videos/temporal/${videoData.id}/${videoData.filename}`;
+  const videoS3Key = getFilePaths.s3TmpVideo(videoData.id, videoData.filename);
   await generalFileService.saveBuffer(bucketName, videoS3Key, videoBuffer);
 
   return videoS3Key;
@@ -172,13 +172,12 @@ export const handler = async (event: Event): Promise<VideoData> => {
   const { id, filename, s3key } = event.Input;
   const videoData = await getVideoMetadata(id, filename, s3key);
   const { width, height } = videoData;
-  const tmpPath = `/tmp/${videoData.id}`;
 
   if (videoData.duration > MAX_DURATION + 1) {
     throw Error("max duration error");
   }
 
-  await makeCleanTemporalFolder(tmpPath);
+  await makeCleanTemporalFolder(videoData.id);
 
   if (!width || !height) {
     const dimensions = await getVideoFrameDimensions(videoData, s3key);

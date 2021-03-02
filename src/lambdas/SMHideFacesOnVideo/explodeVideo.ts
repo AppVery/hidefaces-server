@@ -1,6 +1,9 @@
 import { generalFileService } from "../../services";
 import { VideoData } from "../../domain/interfaces/types";
 import { delay } from "../../utils/validations";
+import getFilePaths, {
+  makeCleanTemporalFolder,
+} from "../../utils/getFilePaths";
 import * as ffmpeg from "fluent-ffmpeg";
 import * as chokidar from "chokidar";
 import * as fs from "fs";
@@ -22,7 +25,7 @@ const initWatcher = (path: string, videoData: VideoData): void => {
   watcher.on("add", async function (path: any) {
     const fileBuffer = await fs.promises.readFile(path);
     const filename = path.split("/")[3];
-    const Key = `videos/temporal/${videoData.id}/${filename}`;
+    const Key = getFilePaths.s3TmpVideo(videoData.id, filename);
 
     if ("audio.mp3" === filename || videoData.filename === filename) return;
 
@@ -44,7 +47,7 @@ const waitWatcher = async (tmpPath: string) => {
 
 const saveAudioOnS3 = async (id: string, path: string): Promise<void> => {
   const audioBuffer = await fs.promises.readFile(path);
-  const audioS3Key = `videos/temporal/${id}/audio.mp3`;
+  const audioS3Key = getFilePaths.s3TmpAudio(id);
   if (audioBuffer) {
     await generalFileService.saveBuffer(bucketName, audioS3Key, audioBuffer);
   }
@@ -52,15 +55,9 @@ const saveAudioOnS3 = async (id: string, path: string): Promise<void> => {
   await fs.promises.unlink(path);
 };
 
-const makeCleanTemporalFolder = async (tmpPath: string): Promise<void> => {
-  if (fs.existsSync(tmpPath)) {
-    fs.rmdirSync(tmpPath, { recursive: true });
-  }
-  await fs.promises.mkdir(tmpPath);
-};
-
 export const handler = async (event: Event): Promise<VideoData> => {
   const videoData = event.Input.Payload;
+  const { id } = videoData;
 
   const resultVideo = await generalFileService.getS3Stream(
     bucketName,
@@ -71,11 +68,11 @@ export const handler = async (event: Event): Promise<VideoData> => {
     throw Error(`explodeVideo: ${resultVideo.error}`);
   }
 
-  const tmpPath = `/tmp/${videoData.id}`;
-  const audioPath = `${tmpPath}/audio.mp3`;
-  const framesPath = `${tmpPath}/frame-%d.png`;
+  const tmpPath = getFilePaths.localFolder(id);
+  const audioPath = getFilePaths.localAudio(id);
+  const framesPath = getFilePaths.localFrames(id);
 
-  await makeCleanTemporalFolder(tmpPath);
+  await makeCleanTemporalFolder(id);
 
   initWatcher(tmpPath, videoData);
 

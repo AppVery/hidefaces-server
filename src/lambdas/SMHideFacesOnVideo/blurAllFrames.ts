@@ -3,6 +3,7 @@ import { generalFileService } from "../../services";
 import { Position } from "../../domain/interfaces/imageService";
 import { SharpImageService } from "../../services/SharpImageService";
 import { Pixel } from "../../services/operations/PixelPO";
+import getFilePaths from "../../utils/getFilePaths";
 
 const bucketName = process.env.MAIN_BUCKET_NAME;
 
@@ -34,7 +35,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
       continue;
     }
 
-    const frameS3key = `videos/temporal/${videoData.id}/frame-${i}.png`;
+    const frameS3key = getFilePaths.s3TmpFrame(videoData.id, i);
     const resultFrameBuffer = await generalFileService.getS3Buffer(
       bucketName,
       frameS3key
