@@ -23,7 +23,7 @@ export const emailsContent = {
       return `Video error: ${id}`;
     },
     getClientText(): string {
-      return `Unexpected error while processing the video, so we will analyze what happened and proceed to refund the money as soon as possible.`;
+      return `Unexpected error processing this video by our sleepy servers... We are very sorry, so to make up for it, we will analyze what happened and proceed to refund your money as soon as possible.`;
     },
     getAdminText(error: string): string {
       return `Error message: \n\n ${error}`;
