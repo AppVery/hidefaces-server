@@ -1,4 +1,4 @@
-import blurAllFrames from "../../useCases/blurAllFrames";
+import useCase from "../../useCases/blurAllFrames";
 import { Request } from "../../useCases/blurAllFrames/requestResponseDTO";
 import { VideoData } from "../../domain/interfaces/types";
 import { Position } from "../../domain/interfaces/imageService";
@@ -28,7 +28,7 @@ export const handler = async (event: Event): Promise<VideoData> => {
     },
   };
 
-  const result = await blurAllFrames.execute(request);
+  const result = await useCase.execute(request);
 
   if (result.isFailure) {
     throw Error(result.error);
