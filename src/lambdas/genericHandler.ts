@@ -11,10 +11,10 @@ type Request = {
   videoData: VideoData;
 };
 
-type Response = VideoData;
-
-export const getGenericHandler = (useCase: UseCase<Request, Response>) => {
-  return async (event: Event): Promise<VideoData> => {
+export const getGenericHandler = <Response>(
+  useCase: UseCase<Request, Response>
+) => {
+  return async (event: Event): Promise<Response> => {
     const videoData = event.Input.Payload;
 
     const request: Request = {

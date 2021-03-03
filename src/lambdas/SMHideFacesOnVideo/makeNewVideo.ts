@@ -1,4 +1,7 @@
 import makeNewVideo from "../../useCases/makeNewVideo";
 import { getGenericHandler } from "../genericHandler";
+import { VideoData } from "../../domain/interfaces/types";
 
-export const handler = getGenericHandler(makeNewVideo);
+type Response = VideoData;
+
+export const handler = getGenericHandler<Response>(makeNewVideo);
