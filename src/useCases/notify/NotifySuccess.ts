@@ -5,6 +5,7 @@ import { Result } from "../../domain/Result";
 import { FileService } from "../../domain/interfaces/fileService";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SESClient } from "@aws-sdk/client-ses";
+import { emailsContent } from "../../domain/content";
 
 export class NotifySuccess extends Notify {
   constructor(
@@ -68,19 +69,32 @@ export class NotifySuccess extends Notify {
     email: string,
     url: string
   ): Promise<Result<void>> {
-    const subject = `Video ${this.id} from ${this.APP_NAME}`;
-    const text = `Hi, this is your temporal downloaded link of your video from ${this.APP_NAME}:`;
-    const plainText = `${text} \n\n ${url}`;
-    const content = `${text}<br/><a href="${url}">Download video</a>`;
-    const html = this.getHtml(subject, content);
+    const {
+      subject,
+      getTitle,
+      getClientText,
+      getClientContent,
+    } = emailsContent.success;
+    const title = getTitle(this.id);
+    const text = getClientText(url);
+    const content = getClientContent(url);
+    const html = this.getHtml(title, content);
 
-    return await this.sendEmail(email, subject, plainText, html);
+    return await this.sendEmail(email, subject, text, html);
   }
 
   private async notifyAdmin(quantity: string): Promise<Result<void>> {
-    const subject = `Video ${this.id} from ${this.APP_NAME}`;
-    const text = `Success video with amount of ${quantity} euros`;
-    const html = this.getHtml(subject, text);
+    const {
+      subject,
+      getTitle,
+      getAdminText,
+      getAdminContent,
+    } = emailsContent.success;
+
+    const title = getTitle(this.id);
+    const text = getAdminText(quantity);
+    const content = getAdminContent(quantity);
+    const html = this.getHtml(title, content);
 
     return await this.sendEmail(this.ADMIN_EMAIL, subject, text, html);
   }

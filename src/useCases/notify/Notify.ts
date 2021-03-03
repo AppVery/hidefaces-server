@@ -12,6 +12,7 @@ import {
   SendEmailCommandInput,
   SendEmailCommand,
 } from "@aws-sdk/client-ses";
+import { emailsContent } from "../../domain/content";
 
 type Data = {
   email: string;
@@ -24,9 +25,8 @@ export abstract class Notify implements UseCase<Request, Response> {
   protected ses: SESClient;
   protected fileService: FileService;
   protected id: string;
-  protected APP_NAME = "HideFaces.app";
-  protected ADMIN_EMAIL = "admin@hidefaces.app";
-  private INFO_EMAIL = "info@hidefaces.app";
+  protected ADMIN_EMAIL = "infoappvery@gmail.com";
+  private SOURCE_EMAIL = "HideFaces.app <info@hidefaces.app>";
 
   constructor(
     database: DynamoDBClient,
@@ -70,7 +70,16 @@ export abstract class Notify implements UseCase<Request, Response> {
   }
 
   protected getHtml = (title: string, content: string): string => {
-    return `<html><head><title>${this.APP_NAME}</title></head><body><p><strong>${title}</strong></p><div>${content}</div></body></html>`;
+    return `<html>
+    <head>
+    <title>${title}</title>
+    </head>
+    <body>
+    <p><strong>${title}</strong></p>
+    <div>${content}</div>
+    ${emailsContent.getFooter()}
+    </body>
+    </html>`;
   };
 
   protected async sendEmail(
@@ -87,15 +96,18 @@ export abstract class Notify implements UseCase<Request, Response> {
         Message: {
           Body: {
             Text: {
+              Charset: "UTF-8",
               Data: text,
             },
             Html: {
+              Charset: "UTF-8",
               Data: html,
             },
           },
           Subject: { Data: subject },
         },
-        Source: this.INFO_EMAIL,
+        Source: this.SOURCE_EMAIL,
+        ReplyToAddresses: [this.SOURCE_EMAIL],
       };
 
       await this.ses.send(new SendEmailCommand(emailInput));

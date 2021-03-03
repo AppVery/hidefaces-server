@@ -4,6 +4,7 @@ import { Result } from "../../domain/Result";
 import { FileService } from "../../domain/interfaces/fileService";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SESClient } from "@aws-sdk/client-ses";
+import { emailsContent } from "../../domain/content";
 
 export class NotifyError extends Notify {
   constructor(
@@ -18,6 +19,12 @@ export class NotifyError extends Notify {
     const { id, error } = request;
     this.id = id;
 
+    const resultNotifyAdmin = await this.notifyAdmin(error);
+
+    if (resultNotifyAdmin.isFailure) {
+      return Result.combineFail(resultNotifyAdmin, "[ADMIN notify error]");
+    }
+
     const resultData = await this.getDataFromDatabase(id);
 
     if (resultData.isFailure) {
@@ -25,12 +32,6 @@ export class NotifyError extends Notify {
     }
 
     const { email } = resultData.value;
-
-    const resultNotifyAdmin = await this.notifyAdmin(error);
-
-    if (resultNotifyAdmin.isFailure) {
-      return Result.combineFail(resultNotifyAdmin, "[ADMIN notify error]");
-    }
 
     const resultNotifyClient = await this.notifyClient(email);
 
@@ -42,9 +43,11 @@ export class NotifyError extends Notify {
   }
 
   private async notifyClient(email: string): Promise<Result<void>> {
-    const subject = `Error on video ${this.id} from ${this.APP_NAME}`;
-    const text = `Unexpected error when processing the video, so we proceed to make the refund of the money as soon as possible.`;
-    const html = this.getHtml(subject, text);
+    const { subject, getTitle, getClientText } = emailsContent.error;
+
+    const title = getTitle(this.id);
+    const text = getClientText();
+    const html = this.getHtml(title, text);
 
     return await this.sendEmail(email, subject, text, html);
   }
@@ -56,12 +59,19 @@ export class NotifyError extends Notify {
     } = JSON.parse(error);
 
     const { errorMessage, trace } = errorData;
-    const subject = `Error on video ${this.id} from ${this.APP_NAME}`;
-    const content = `<p>${errorMessage}</p><ul>${trace.map(
-      (line) => `<li>${line}</li>`
-    )}</ul>`;
-    const html = this.getHtml(subject, content);
 
-    return await this.sendEmail(this.ADMIN_EMAIL, subject, errorMessage, html);
+    const {
+      subject,
+      getTitle,
+      getAdminText,
+      getAdminContent,
+    } = emailsContent.error;
+
+    const title = getTitle(this.id);
+    const text = getAdminText(errorMessage);
+    const content = getAdminContent(errorMessage, trace);
+    const html = this.getHtml(title, content);
+
+    return await this.sendEmail(this.ADMIN_EMAIL, subject, text, html);
   }
 }
