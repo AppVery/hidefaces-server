@@ -69,7 +69,11 @@ export abstract class Notify implements UseCase<Request, Response> {
     }
   }
 
-  protected getHtml = (title: string, content: string): string => {
+  protected getHtml = (
+    title: string,
+    content: string,
+    footer = false
+  ): string => {
     return `<html>
     <head>
     <title>${title}</title>
@@ -77,7 +81,7 @@ export abstract class Notify implements UseCase<Request, Response> {
     <body>
     <p><strong>${title}</strong></p>
     <div>${content}</div>
-    ${emailsContent.getFooter()}
+    ${footer ? emailsContent.getFooter() : ""}
     </body>
     </html>`;
   };

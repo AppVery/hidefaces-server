@@ -78,23 +78,17 @@ export class NotifySuccess extends Notify {
     const title = getTitle(this.id);
     const text = getClientText(url);
     const content = getClientContent(url);
-    const html = this.getHtml(title, content);
+    const html = this.getHtml(title, content, true);
 
     return await this.sendEmail(email, subject, text, html);
   }
 
   private async notifyAdmin(quantity: string): Promise<Result<void>> {
-    const {
-      subject,
-      getTitle,
-      getAdminText,
-      getAdminContent,
-    } = emailsContent.success;
+    const { subject, getTitle, getAdminText } = emailsContent.success;
 
     const title = getTitle(this.id);
     const text = getAdminText(quantity);
-    const content = getAdminContent(quantity);
-    const html = this.getHtml(title, content);
+    const html = this.getHtml(title, text);
 
     return await this.sendEmail(this.ADMIN_EMAIL, subject, text, html);
   }
