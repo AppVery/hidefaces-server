@@ -11,8 +11,10 @@ export const emailsContent = {
     getClientContent(url: string): string {
       return `${emailsContent.success.text}<br/><a href="${url}">Download video</a>`;
     },
-    getAdminText(quantity: string): string {
-      return `Success video with amount of ${parseInt(quantity) / 100}€`;
+    getAdminText(quantity: string, extension: string): string {
+      return `Success video [${extension}] with amount of ${
+        parseInt(quantity) / 100
+      }€`;
     },
   },
   error: {
