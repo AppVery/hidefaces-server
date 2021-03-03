@@ -55,7 +55,7 @@ export class MakeNewVideo implements UseCase<Request, Response> {
         await this.videoService.makeMuteVideo(imagesStream, fps, videoPath);
       }
     } catch (error) {
-      return Result.fail<VideoData>(`[MakeNewVideo] ${error.toString()}`);
+      return Result.fail<Response>(`[MakeNewVideo] ${error.toString()}`);
     }
 
     const resultSaveVideo = await this.saveVideoOnS3(videoData, videoPath);
@@ -67,7 +67,7 @@ export class MakeNewVideo implements UseCase<Request, Response> {
       );
     }
 
-    return Result.ok<VideoData>(videoData);
+    return Result.ok<Response>(videoData);
   }
 
   private getImagesStream(id: string, totalFrames: number) {

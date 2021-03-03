@@ -5,6 +5,60 @@ import { Readable } from "stream";
 export class FfmpegVideoService implements VideoService {
   private ffmpeg = fluentFfmpeg;
 
+  public async getMetadata(videoBuffer: Buffer) {
+    return new Promise((resolve, reject) => {
+      this.ffmpeg.ffprobe(videoBuffer, function (error: any, metadata: any) {
+        if (error) {
+          reject(`getVideoMetadata: ${error}`);
+        }
+        resolve(metadata);
+      });
+    });
+  }
+
+  public async getVideoFrame(
+    videoPath: string,
+    screenshotFilename: string,
+    folder: string
+  ) {
+    return new Promise((resolve, reject) => {
+      this.ffmpeg(videoPath)
+        .on("end", function () {
+          resolve("ok");
+        })
+        .on("error", function (err: any) {
+          reject(err);
+        })
+        .screenshots({
+          count: 1,
+          timestamps: [1],
+          filename: screenshotFilename,
+          folder,
+        });
+    });
+  }
+
+  public async changeVideoSource(
+    path: string,
+    percentage: number,
+    fps: number,
+    newPath: string
+  ) {
+    return new Promise((resolve, reject) => {
+      this.ffmpeg(path)
+        .on("end", function () {
+          resolve("ok");
+        })
+        .on("error", function (err: any) {
+          reject(err);
+        })
+        .size(`${percentage}%`)
+        .outputFPS(fps)
+        .outputOptions("-movflags frag_keyframe+empty_moov")
+        .save(newPath);
+    });
+  }
+
   public async explodeVideo(
     videoBuffer: Buffer,
     framesPath: string,
