@@ -45,7 +45,7 @@ export class Payment implements UseCase<Request, Response> {
       );
     }
 
-    const { id } = resultMakePayment.value;
+    const id = resultMakePayment.value;
 
     const resultSaveData = await this.saveOperation(
       id,
@@ -55,13 +55,19 @@ export class Payment implements UseCase<Request, Response> {
     );
 
     if (resultSaveData.isFailure) {
-      return Result.fail<Response>(resultSaveData.error, resultSaveData.code);
+      return Result.combineFail<Response>(
+        resultSaveData,
+        "[Payment - save operation]"
+      );
     }
 
     const resultTempUrl = await this.getTempUploadUrl(id, extension);
 
     if (resultTempUrl.isFailure) {
-      return Result.fail<Response>(resultTempUrl.error, resultTempUrl.code);
+      return Result.combineFail<Response>(
+        resultTempUrl,
+        "[Payment - getting url]"
+      );
     }
 
     const response: Response = {
@@ -75,7 +81,7 @@ export class Payment implements UseCase<Request, Response> {
   private async makePayment(
     token: string,
     quantity: number
-  ): Promise<Result<{ id: string; zip: string }>> {
+  ): Promise<Result<string>> {
     try {
       const charge = await this.stripe.charges.create({
         source: token,
@@ -83,11 +89,8 @@ export class Payment implements UseCase<Request, Response> {
         description: "HideFaces.app",
         currency: "eur",
       });
-      const data = {
-        id: charge.id.split("ch_")[1],
-        zip: charge.billing_details.address?.postal_code,
-      };
-      return Result.ok(data);
+      const id = charge.id.split("ch_")[1];
+      return Result.ok(id);
     } catch (error) {
       const { statusCode, message } = error;
       return Result.fail(`Payment status: ${message}`, statusCode);
@@ -129,7 +132,7 @@ export class Payment implements UseCase<Request, Response> {
         Key: getFilePaths.s3SourceVideo(id, extension),
       };
       const url = await this.getTempUrl(this.s3, new PutObjectCommand(input), {
-        expiresIn: 60,
+        expiresIn: 120,
       });
       return Result.ok<string>(url);
     } catch (error) {

@@ -18,15 +18,42 @@ export class GetFacesData implements UseCase<Request, Response> {
 
   public async execute(request: Request): Promise<Result<Response>> {
     const { videoData } = request;
-    const { width, height, totalFrames } = videoData;
 
-    const maxVector = this.getPitagorasVector(width, height);
+    const { lastFrameWithData, facesData } = await this.analyzeFacesData(
+      videoData
+    );
+
+    const facesPositions = this.analyzeFacesPositions(
+      videoData,
+      lastFrameWithData,
+      facesData
+    );
+
+    const mapper = this.getMapper(videoData.totalFrames, facesPositions);
+
+    const framesData: string = JSON.stringify({
+      facesPositions: [...facesPositions],
+      mapper: [...mapper],
+    });
+
+    const response: Response = { id: videoData.id, videoData, framesData };
+
+    return Result.ok<Response>(response);
+  }
+
+  private async analyzeFacesData(
+    videoData: VideoData
+  ): Promise<{
+    lastFrameWithData: number;
+    facesData: Map<number, FaceDetail[]>;
+  }> {
+    const { id, totalFrames } = videoData;
     let lastFrameWithData = 1;
 
     const facesData: Map<number, FaceDetail[]> = new Map();
 
     for (let i = 1; i <= totalFrames; i += this.INTERVAL) {
-      const s3key = getFilePaths.s3TmpFrame(videoData.id, i);
+      const s3key = getFilePaths.s3TmpFrame(id, i);
       const result = await this.iaService.getDataFacesImageS3(
         s3key,
         this.bucketName
@@ -49,6 +76,19 @@ export class GetFacesData implements UseCase<Request, Response> {
       lastFrameWithData = i;
     }
 
+    return {
+      lastFrameWithData,
+      facesData,
+    };
+  }
+
+  private analyzeFacesPositions(
+    videoData: VideoData,
+    lastFrameWithData: number,
+    facesData: Map<number, FaceDetail[]>
+  ): Map<number, Position[]> {
+    const { width, height } = videoData;
+    const maxVector = this.getPitagorasVector(width, height);
     const facesPositions = new Map<number, Position[]>();
 
     for (const [key, frameData] of facesData) {
@@ -60,7 +100,20 @@ export class GetFacesData implements UseCase<Request, Response> {
       }
     }
 
-    //improve frames data by sharing data between frames
+    const betterFacesPositions = this.improveFramesData(
+      maxVector,
+      lastFrameWithData,
+      facesPositions
+    );
+
+    return betterFacesPositions;
+  }
+
+  private improveFramesData(
+    maxVector: number,
+    lastFrameWithData: number,
+    facesPositions: Map<number, Position[]>
+  ): Map<number, Position[]> {
     for (const [key, frameData] of facesPositions) {
       //if we are not in the first or last frame
       if (key > 1 && key < lastFrameWithData) {
@@ -91,10 +144,17 @@ export class GetFacesData implements UseCase<Request, Response> {
       }
     }
 
+    return facesPositions;
+  }
+
+  private getMapper(
+    totalFrames: number,
+    facesPositions: Map<number, Position[]>
+  ): Map<number, number> {
     const mapper = new Map<number, number>();
     let frameWithData = 1;
 
-    for (let i = 1; i <= videoData.totalFrames; i++) {
+    for (let i = 1; i <= totalFrames; i++) {
       if (i >= frameWithData + this.INTERVAL / 2) {
         frameWithData = frameWithData + this.INTERVAL;
       }
@@ -106,25 +166,16 @@ export class GetFacesData implements UseCase<Request, Response> {
       mapper.set(i, frameToMap);
     }
 
-    const framesData: string = JSON.stringify({
-      facesPositions: [...facesPositions],
-      mapper: [...mapper],
-    });
-
-    const response: Response = { id: videoData.id, videoData, framesData };
-
-    return Result.ok<Response>(response);
+    return mapper;
   }
 
   private getFacesPositions(
     videoData: VideoData,
     BoundingBox: BoundingBox
   ): Position {
+    const INC_FACES_BOX = 1.8;
     const frameWidth = videoData.width;
     const frameHeight = videoData.height;
-    const maxWidth = videoData.width;
-    const maxHeight = videoData.height;
-    const INC_FACES_BOX = 1.8;
     const { Top, Left, Width, Height } = BoundingBox;
     const top = Math.floor(
       Top * frameHeight +
@@ -137,8 +188,8 @@ export class GetFacesData implements UseCase<Request, Response> {
         (Width * frameWidth * INC_FACES_BOX) / 2
     );
     const positions = {
-      top: Math.min(Math.abs(top), maxHeight),
-      left: Math.min(Math.abs(left), maxWidth),
+      top: Math.min(Math.abs(top), frameHeight),
+      left: Math.min(Math.abs(left), frameWidth),
       width: Math.floor(Width * frameWidth * INC_FACES_BOX),
       height: Math.floor(Height * frameHeight * INC_FACES_BOX),
     };
@@ -148,12 +199,12 @@ export class GetFacesData implements UseCase<Request, Response> {
       top: positions.top,
       left: positions.left,
       width:
-        positions.left + positions.width >= maxWidth
-          ? maxWidth - positions.left
+        positions.left + positions.width >= frameWidth
+          ? frameWidth - positions.left
           : positions.width,
       height:
-        positions.top + positions.height >= maxHeight
-          ? maxHeight - positions.top
+        positions.top + positions.height >= frameHeight
+          ? frameHeight - positions.top
           : positions.height,
     };
   }
@@ -163,28 +214,14 @@ export class GetFacesData implements UseCase<Request, Response> {
     currentData: Position[],
     maxVector: number
   ): boolean {
-    const getMinMaxVectorsPercentage = (
-      positions: Position[],
-      maxVector: number
-    ): { min: number; max: number } => {
-      const getVector = (position: Position): number => {
-        const { top, left, width, height } = position;
-        return this.getPitagorasVector(left + width / 2, top + height / 2);
-      };
-      const vectors = positions.map((position) => getVector(position));
-      return {
-        min: Math.round((Math.max(...vectors) * 100) / maxVector),
-        max: Math.round((Math.min(...vectors) * 100) / maxVector),
-      };
-    };
-    const { min: beforeMin, max: beforeMax } = getMinMaxVectorsPercentage(
+    const { min: beforeMin, max: beforeMax } = this.getMinMaxVectorsPercentage(
       beforeData,
       maxVector
     );
-    const { min: currentMin, max: currentMax } = getMinMaxVectorsPercentage(
-      currentData,
-      maxVector
-    );
+    const {
+      min: currentMin,
+      max: currentMax,
+    } = this.getMinMaxVectorsPercentage(currentData, maxVector);
 
     //check if quick movement >10% is detect
     const check =
@@ -197,6 +234,23 @@ export class GetFacesData implements UseCase<Request, Response> {
     }
 
     return check;
+  }
+
+  private getMinMaxVectorsPercentage(
+    positions: Position[],
+    maxVector: number
+  ): { min: number; max: number } {
+    const vectors = positions.map((position) => this.getVector(position));
+
+    return {
+      min: Math.round((Math.max(...vectors) * 100) / maxVector),
+      max: Math.round((Math.min(...vectors) * 100) / maxVector),
+    };
+  }
+
+  private getVector(position: Position): number {
+    const { top, left, width, height } = position;
+    return this.getPitagorasVector(left + width / 2, top + height / 2);
   }
 
   private getPitagorasVector(x: number, y: number): number {

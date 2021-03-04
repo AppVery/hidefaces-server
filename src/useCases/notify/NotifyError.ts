@@ -22,13 +22,13 @@ export class NotifyError extends Notify {
     const resultNotifyAdmin = await this.notifyAdmin(error);
 
     if (resultNotifyAdmin.isFailure) {
-      return Result.combineFail(resultNotifyAdmin, "[ADMIN notify error]");
+      return Result.combineFail(resultNotifyAdmin, "[NotifyError - admin]");
     }
 
     const resultData = await this.getDataFromDatabase(id);
 
     if (resultData.isFailure) {
-      return Result.combineFail(resultData, "[Error on database]");
+      return Result.combineFail(resultData, "[NotifyError - database]");
     }
 
     const { email } = resultData.value;
@@ -36,7 +36,7 @@ export class NotifyError extends Notify {
     const resultNotifyClient = await this.notifyClient(email);
 
     if (resultNotifyClient.isFailure) {
-      return Result.combineFail(resultNotifyClient, "[CLIENT notify error]");
+      return Result.combineFail(resultNotifyClient, "[NotifyError - client]");
     }
 
     return Result.ok<void>();

@@ -23,7 +23,10 @@ export class NotifySuccess extends Notify {
     const resultData = await this.getDataFromDatabase(id);
 
     if (resultData.isFailure) {
-      return Result.combineFail(resultData, "[Error on database]");
+      return Result.combineFail(
+        resultData,
+        "[NotifySuccess - Error on database]"
+      );
     }
 
     const { email, extension, quantity } = resultData.value;
@@ -31,7 +34,10 @@ export class NotifySuccess extends Notify {
     const resultUrl = await this.getDownloadUrl(extension);
 
     if (resultUrl.isFailure) {
-      return Result.combineFail(resultUrl, "[Error on temporal url]");
+      return Result.combineFail(
+        resultUrl,
+        "[NotifySuccess - Error on temporal url]"
+      );
     }
 
     const url = resultUrl.value;
@@ -39,13 +45,16 @@ export class NotifySuccess extends Notify {
     const resultNotifyAdmin = await this.notifyAdmin(quantity, extension);
 
     if (resultNotifyAdmin.isFailure) {
-      return Result.combineFail(resultNotifyAdmin, "[ADMIN notify success]");
+      return Result.combineFail(resultNotifyAdmin, "[NotifySuccess - Admin]");
     }
 
     const resultNotifyClient = await this.notifyClient(email, url);
 
     if (resultNotifyClient.isFailure) {
-      return Result.combineFail(resultNotifyClient, "[CLIENT notify success]");
+      return Result.combineFail(
+        resultNotifyClient,
+        "[NotifySuccess - client ]"
+      );
     }
 
     return Result.ok<void>();

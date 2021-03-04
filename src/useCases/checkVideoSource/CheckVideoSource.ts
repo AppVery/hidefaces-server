@@ -32,7 +32,10 @@ export class CheckVideoSource implements UseCase<Request, Response> {
     const resultVideoData = await this.getVideoMetadata(id, filename, s3key);
 
     if (resultVideoData.isFailure) {
-      return Result.fail<Response>(`[CheckVideoSource] getVideoMetadata`);
+      return Result.combineFail<Response>(
+        resultVideoData,
+        `[CheckVideoSource]`
+      );
     }
 
     const videoData = resultVideoData.value;
