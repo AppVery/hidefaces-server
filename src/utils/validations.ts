@@ -72,3 +72,12 @@ export const parsePositiveNumber = (
 
   return number > 0 ? number : 0;
 };
+
+export const isValidJSONToParse = (string: string): boolean => {
+  try {
+    JSON.parse(string);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};

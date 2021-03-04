@@ -5,6 +5,7 @@ import { FileService } from "../../domain/interfaces/fileService";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SESClient } from "@aws-sdk/client-ses";
 import { emailsContent } from "../../domain/content";
+import { hasValue, isValidJSONToParse } from "../../utils/validations";
 
 export class NotifyError extends Notify {
   constructor(
@@ -56,9 +57,12 @@ export class NotifyError extends Notify {
     const errorData: {
       errorMessage: string;
       trace: string[];
-    } = JSON.parse(error);
+    } = isValidJSONToParse(error) ? JSON.parse(error) : error;
 
-    const { errorMessage, trace } = errorData;
+    const errorMessage = hasValue(errorData.errorMessage)
+      ? errorData.errorMessage
+      : error;
+    const trace = hasValue(errorData.trace) ? errorData.trace : [];
 
     const {
       subject,
