@@ -200,11 +200,11 @@ export class GetFacesData implements UseCase<Request, Response> {
       left: positions.left,
       width:
         positions.left + positions.width >= frameWidth
-          ? frameWidth - positions.left
+          ? frameWidth - positions.left - 5 //avoid border in 5px
           : positions.width,
       height:
         positions.top + positions.height >= frameHeight
-          ? frameHeight - positions.top
+          ? frameHeight - positions.top - 5 //avoid border in 5px
           : positions.height,
     };
   }

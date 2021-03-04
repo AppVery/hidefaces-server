@@ -91,8 +91,8 @@ export class CheckVideoSource implements UseCase<Request, Response> {
     }
 
     videoData.s3key = newS3key;
-    videoData.width = videoData.width * (sizePercentage / 100);
-    videoData.height = videoData.height * (sizePercentage / 100);
+    videoData.width = Math.floor(videoData.width * (sizePercentage / 100));
+    videoData.height = Math.floor(videoData.height * (sizePercentage / 100));
 
     return Result.ok<Response>(videoData);
   }

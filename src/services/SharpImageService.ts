@@ -45,7 +45,7 @@ export class SharpImageService implements ImageService {
         .toBuffer();
       return Result.ok<Buffer>(extract);
     } catch (error) {
-      return Result.fail<Buffer>(`Image Service: ${error.toString()}`);
+      return Result.fail<Buffer>(`Image Service Extract: ${error.toString()}`);
     }
   }
 
@@ -64,7 +64,9 @@ export class SharpImageService implements ImageService {
         .toBuffer();
       return Result.ok<Buffer>(imagePixelated);
     } catch (error) {
-      return Result.fail<Buffer>(`Image Service: ${error.toString()}`);
+      return Result.fail<Buffer>(
+        `Image Service Pixelation: ${error.toString()}`
+      );
     }
   }
 
@@ -88,7 +90,9 @@ export class SharpImageService implements ImageService {
         .toBuffer();
       return Result.ok<Buffer>(imageBlur);
     } catch (error) {
-      return Result.fail<Buffer>(`Image Service: ${error.toString()}`);
+      return Result.fail<Buffer>(
+        `Image Service BlurBorder: ${error.toString()}`
+      );
     }
   }
 
@@ -105,7 +109,7 @@ export class SharpImageService implements ImageService {
         .toBuffer();
       return Result.ok<Buffer>(icon);
     } catch (error) {
-      return Result.fail<Buffer>(`Image Service: ${error.toString()}`);
+      return Result.fail<Buffer>(`Image Service getIcon: ${error.toString()}`);
     }
   }
 }
