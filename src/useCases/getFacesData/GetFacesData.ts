@@ -176,20 +176,21 @@ export class GetFacesData implements UseCase<Request, Response> {
     const INC_FACES_BOX = 1.8;
     const frameWidth = videoData.width;
     const frameHeight = videoData.height;
-    const { Top, Left, Width, Height } = BoundingBox;
-    const top = Math.floor(
+    const { Top, Left, Width, Height } = BoundingBox; //percentages of total sizes
+    const topPosition = Math.floor(
       Top * frameHeight +
         (Height * frameHeight) / 2 -
         (Height * frameHeight * INC_FACES_BOX) / 2
     );
-    const left = Math.floor(
+    const leftPosition = Math.floor(
       Left * frameWidth +
         (Width * frameWidth) / 2 -
         (Width * frameWidth * INC_FACES_BOX) / 2
     );
     const positions = {
-      top: Math.min(Math.abs(top), frameHeight),
-      left: Math.min(Math.abs(left), frameWidth),
+      //avoid negative values with min. of 5px vs avoid go to the limits of the frame
+      top: Math.min(topPosition <= 0 ? 5 : topPosition, frameHeight - 10),
+      left: Math.min(leftPosition <= 0 ? 5 : leftPosition, frameWidth - 10),
       width: Math.floor(Width * frameWidth * INC_FACES_BOX),
       height: Math.floor(Height * frameHeight * INC_FACES_BOX),
     };
