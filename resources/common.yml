@@ -5,6 +5,7 @@ custom:
     sourcemaps: false
     externals:
       - chokidar
+      - fluent-ffmpeg
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:service}-${self:custom.stage}
   myProfile:
