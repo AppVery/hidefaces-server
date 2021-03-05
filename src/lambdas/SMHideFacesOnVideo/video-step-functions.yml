@@ -18,7 +18,7 @@ States:
                       [
                         "arn:aws:lambda:eu-west-1",
                         { "Ref": "AWS::AccountId" },
-                        "function:${self:service}-${self:provider.stage}-checkVideoSource",
+                        "function:${self:service}-${self:custom.stage}-checkVideoSource",
                       ],
                     ],
                 }
@@ -37,7 +37,7 @@ States:
                       [
                         "arn:aws:lambda:eu-west-1",
                         { "Ref": "AWS::AccountId" },
-                        "function:${self:service}-${self:provider.stage}-explodeVideo",
+                        "function:${self:service}-${self:custom.stage}-explodeVideo",
                       ],
                     ],
                 }
@@ -56,7 +56,7 @@ States:
                       [
                         "arn:aws:lambda:eu-west-1",
                         { "Ref": "AWS::AccountId" },
-                        "function:${self:service}-${self:provider.stage}-getFacesData",
+                        "function:${self:service}-${self:custom.stage}-getFacesData",
                       ],
                     ],
                 }
@@ -80,7 +80,7 @@ States:
                               [
                                 "arn:aws:lambda:eu-west-1",
                                 { "Ref": "AWS::AccountId" },
-                                "function:${self:service}-${self:provider.stage}-blurAllFrames1",
+                                "function:${self:service}-${self:custom.stage}-blurAllFrames1",
                               ],
                             ],
                         }
@@ -101,7 +101,7 @@ States:
                               [
                                 "arn:aws:lambda:eu-west-1",
                                 { "Ref": "AWS::AccountId" },
-                                "function:${self:service}-${self:provider.stage}-blurAllFrames2",
+                                "function:${self:service}-${self:custom.stage}-blurAllFrames2",
                               ],
                             ],
                         }
@@ -121,7 +121,7 @@ States:
                       [
                         "arn:aws:lambda:eu-west-1",
                         { "Ref": "AWS::AccountId" },
-                        "function:${self:service}-${self:provider.stage}-makeNewVideo",
+                        "function:${self:service}-${self:custom.stage}-makeNewVideo",
                       ],
                     ],
                 }
@@ -140,7 +140,7 @@ States:
                       [
                         "arn:aws:lambda:eu-west-1",
                         { "Ref": "AWS::AccountId" },
-                        "function:${self:service}-${self:provider.stage}-notifySuccess",
+                        "function:${self:service}-${self:custom.stage}-notifySuccess",
                       ],
                     ],
                 }
@@ -164,7 +164,7 @@ States:
               [
                 "arn:aws:lambda:eu-west-1",
                 { "Ref": "AWS::AccountId" },
-                "function:${self:service}-${self:provider.stage}-notifyError",
+                "function:${self:service}-${self:custom.stage}-notifyError",
               ],
             ],
         }
