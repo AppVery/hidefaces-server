@@ -69,8 +69,14 @@ functions:
   getFacesData:
     handler: src/lambdas/SMHideFacesOnVideo/getFacesData.handler
     timeout: 500
-  blurAllFrames:
-    handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames.handler
+  blurAllFrames1:
+    handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames1.handler
+    memorySize: 3008
+    timeout: 900
+    layers:
+      - ${self:custom.sharpLayer}
+  blurAllFrames2:
+    handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames2.handler
     memorySize: 3008
     timeout: 900
     layers:

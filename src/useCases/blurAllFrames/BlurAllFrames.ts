@@ -18,11 +18,16 @@ export class BlurAllFrames implements UseCase<Request, Response> {
 
   public async execute(request: Request): Promise<Result<Response>> {
     const {
+      index,
       videoData,
       framesData: { mapper, facesPositions },
     } = request;
 
-    for (let i = 1; i <= videoData.totalFrames; i++) {
+    const middleFrame = Math.floor(videoData.totalFrames / 2);
+    const initFrame = 1 === index ? 1 : middleFrame + 1;
+    const lastFrame = 1 === index ? middleFrame : videoData.totalFrames;
+
+    for (let i = initFrame; i <= lastFrame; i++) {
       const frameWithData = mapper.get(i);
       const frameFacesPositions = facesPositions.get(frameWithData);
 

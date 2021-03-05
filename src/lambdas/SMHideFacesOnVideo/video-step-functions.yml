@@ -64,23 +64,50 @@ States:
                 Input.$: "$"
             Next: blurAllFrames
           blurAllFrames:
-            Type: Task
-            Resource: arn:aws:states:::lambda:invoke
-            Parameters:
-              FunctionName:
-                {
-                  "Fn::Join":
-                    [
-                      ":",
-                      [
-                        "arn:aws:lambda:eu-west-1",
-                        { "Ref": "AWS::AccountId" },
-                        "function:${self:service}-${self:provider.stage}-blurAllFrames",
-                      ],
-                    ],
-                }
-              Payload:
-                Input.$: "$"
+            Type: Parallel
+            Branches:
+              - StartAt: blurAllFrames1
+                States:
+                  blurAllFrames1:
+                    Type: Task
+                    Resource: arn:aws:states:::lambda:invoke
+                    Parameters:
+                      FunctionName:
+                        {
+                          "Fn::Join":
+                            [
+                              ":",
+                              [
+                                "arn:aws:lambda:eu-west-1",
+                                { "Ref": "AWS::AccountId" },
+                                "function:${self:service}-${self:provider.stage}-blurAllFrames1",
+                              ],
+                            ],
+                        }
+                      Payload:
+                        Input.$: "$"
+                    End: true
+              - StartAt: blurAllFrames2
+                States:
+                  blurAllFrames2:
+                    Type: Task
+                    Resource: arn:aws:states:::lambda:invoke
+                    Parameters:
+                      FunctionName:
+                        {
+                          "Fn::Join":
+                            [
+                              ":",
+                              [
+                                "arn:aws:lambda:eu-west-1",
+                                { "Ref": "AWS::AccountId" },
+                                "function:${self:service}-${self:provider.stage}-blurAllFrames2",
+                              ],
+                            ],
+                        }
+                      Payload:
+                        Input.$: "$"
+                    End: true
             Next: makeNewVideo
           makeNewVideo:
             Type: Task
@@ -99,7 +126,7 @@ States:
                     ],
                 }
               Payload:
-                Input.$: "$"
+                Input.$: "$[0]"
             Next: notifySuccess
           notifySuccess:
             Type: Task
