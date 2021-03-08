@@ -7,6 +7,7 @@ import {
   parseEmail,
   parseExtension,
   parseNumber,
+  parseString,
 } from "../utils/validations";
 
 const MIN_PRICE = 100;
@@ -21,7 +22,8 @@ export const handler = async (
     if (
       !hasValue(body.email) ||
       !hasValue(body.filename) ||
-      !hasValue(body.amount)
+      !hasValue(body.amount) ||
+      !hasValue(body.origin)
     ) {
       throw new Error("Invalid request");
     }
@@ -30,6 +32,7 @@ export const handler = async (
       email: parseEmail("email", body.email),
       extension: parseExtension("filename", body.filename),
       amount: parseNumber("amount", body.amount),
+      origin: parseString("origin", body.origin),
     };
 
     if (request.amount < MIN_PRICE || request.amount > MAX_PRICE) {

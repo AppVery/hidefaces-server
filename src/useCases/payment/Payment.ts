@@ -36,18 +36,18 @@ export class Payment implements UseCase<Request, Response> {
   }
 
   public async execute(request: Request): Promise<Result<Response>> {
-    const { email, extension, amount } = request;
+    const { email, extension, amount, origin } = request;
 
-    const resultMakePayment = await this.makePayment(amount);
+    const resultGetPaySession = await this.getPaySession(email, amount, origin);
 
-    if (resultMakePayment.isFailure) {
+    if (resultGetPaySession.isFailure) {
       return Result.fail<Response>(
-        resultMakePayment.error,
-        resultMakePayment.code
+        resultGetPaySession.error,
+        resultGetPaySession.code
       );
     }
 
-    const session = resultMakePayment.value;
+    const session = resultGetPaySession.value;
     const id = session.id.split("_")[2];
 
     const resultSaveData = await this.saveOperation(
@@ -81,9 +81,14 @@ export class Payment implements UseCase<Request, Response> {
     return Result.ok<Response>(response);
   }
 
-  private async makePayment(amount: number): Promise<Result<Session>> {
+  private async getPaySession(
+    email: string,
+    amount: number,
+    origin: string
+  ): Promise<Result<Session>> {
     try {
       const session = await this.stripe.checkout.sessions.create({
+        customer_email: email,
         payment_method_types: ["card"],
         line_items: [
           {
@@ -98,8 +103,8 @@ export class Payment implements UseCase<Request, Response> {
           },
         ],
         mode: "payment",
-        success_url: "https://hidefaces.app/success",
-        cancel_url: "https://hidefaces.app/cancel",
+        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/cancel?session_id={CHECKOUT_SESSION_ID}`,
       });
 
       /* eslint-disable  no-console */
