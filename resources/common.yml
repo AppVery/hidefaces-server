@@ -1,36 +1,3 @@
-custom:
-  AccountId: !Ref AWS::AccountId
-  bundle:
-    linting: true
-    sourcemaps: false
-    externals:
-      - chokidar
-      - fluent-ffmpeg
-  stage: ${opt:stage, self:provider.stage}
-  prefix: ${self:service}-${self:custom.stage}
-  myProfile:
-    prod: general-prod
-    dev: general-dev
-  useDotenv: true
-  mainBucketName:
-    Fn::Join:
-      - "-"
-      - - ${self:custom.prefix}
-        - !Ref AWS::AccountId
-        - "main"
-  ffmpegLayer:
-    Fn::Join:
-      - ":"
-      - - "arn:aws:lambda:eu-west-1"
-        - !Ref AWS::AccountId
-        - "layer:ffmpeg:1"
-  sharpLayer:
-    Fn::Join:
-      - ":"
-      - - "arn:aws:lambda:eu-west-1"
-        - !Ref AWS::AccountId
-        - "layer:sharp:1"
-
 lambdaPolicyDynamoDBMain:
   Effect: Allow
   Action:

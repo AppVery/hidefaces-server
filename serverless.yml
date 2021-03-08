@@ -1,7 +1,7 @@
 service: hidefaces-server
 
 plugins:
-  - serverless-bundle
+  - serverless-esbuild
   - serverless-offline
   - serverless-dotenv-plugin
   - serverless-step-functions
@@ -9,7 +9,40 @@ plugins:
 package:
   individually: true
 
-custom: ${file(resources/common.yml):custom}
+custom:
+  AccountId: !Ref AWS::AccountId
+  esbuild:
+    target: node12
+    external:
+      - chokidar
+      - fluent-ffmpeg
+    exclude:
+      - "@aws-sdk"
+      - sharp
+  stage: ${opt:stage, self:provider.stage}
+  prefix: ${self:service}-${self:custom.stage}
+  myProfile:
+    prod: general-prod
+    dev: general-dev
+  useDotenv: true
+  mainBucketName:
+    Fn::Join:
+      - "-"
+      - - ${self:custom.prefix}
+        - !Ref AWS::AccountId
+        - "main"
+  ffmpegLayer:
+    Fn::Join:
+      - ":"
+      - - "arn:aws:lambda:eu-west-1"
+        - !Ref AWS::AccountId
+        - "layer:ffmpeg:1"
+  sharpLayer:
+    Fn::Join:
+      - ":"
+      - - "arn:aws:lambda:eu-west-1"
+        - !Ref AWS::AccountId
+        - "layer:sharp:1"
 
 provider:
   name: aws
