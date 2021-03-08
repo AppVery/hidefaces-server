@@ -13,9 +13,6 @@ custom:
   AccountId: !Ref AWS::AccountId
   esbuild:
     target: node12
-    external:
-      - chokidar
-      - fluent-ffmpeg
     exclude:
       - sharp
   stage: ${opt:stage, self:provider.stage}

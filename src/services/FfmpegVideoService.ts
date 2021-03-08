@@ -1,9 +1,10 @@
 import { VideoService } from "../domain/interfaces/videoService";
-import * as fluentFfmpeg from "fluent-ffmpeg";
 import { Readable } from "stream";
 
+const ffmpeg = require("fluent-ffmpeg");
+
 export class FfmpegVideoService implements VideoService {
-  private ffmpeg = fluentFfmpeg;
+  private ffmpeg = ffmpeg;
 
   public async getMetadata(videoBuffer: Buffer) {
     return new Promise((resolve, reject) => {
