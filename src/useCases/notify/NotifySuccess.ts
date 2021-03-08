@@ -29,7 +29,7 @@ export class NotifySuccess extends Notify {
       );
     }
 
-    const { email, extension, quantity } = resultData.value;
+    const { email, extension, amount } = resultData.value;
 
     const resultUrl = await this.getDownloadUrl(extension);
 
@@ -42,7 +42,7 @@ export class NotifySuccess extends Notify {
 
     const url = resultUrl.value;
 
-    const resultNotifyAdmin = await this.notifyAdmin(quantity, extension);
+    const resultNotifyAdmin = await this.notifyAdmin(amount, extension);
 
     if (resultNotifyAdmin.isFailure) {
       return Result.combineFail(resultNotifyAdmin, "[NotifySuccess - Admin]");
@@ -93,13 +93,13 @@ export class NotifySuccess extends Notify {
   }
 
   private async notifyAdmin(
-    quantity: string,
+    amount: string,
     extension: string
   ): Promise<Result<void>> {
     const { subject, getTitle, getAdminText } = emailsContent.success;
 
     const title = getTitle(this.id);
-    const text = getAdminText(quantity, extension);
+    const text = getAdminText(amount, extension);
     const html = this.getHtml(title, text);
 
     return await this.sendEmail(this.ADMIN_EMAIL, subject, text, html);

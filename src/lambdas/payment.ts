@@ -5,7 +5,6 @@ import baseAPIResponses from "../utils/baseApiResponses";
 import {
   hasValue,
   parseEmail,
-  parseString,
   parseExtension,
   parseNumber,
 } from "../utils/validations";
@@ -21,22 +20,20 @@ export const handler = async (
 
     if (
       !hasValue(body.email) ||
-      !hasValue(body.token) ||
       !hasValue(body.filename) ||
-      !hasValue(body.quantity)
+      !hasValue(body.amount)
     ) {
       throw new Error("Invalid request");
     }
 
     const request: Request = {
       email: parseEmail("email", body.email),
-      token: parseString("token", body.token),
       extension: parseExtension("filename", body.filename),
-      quantity: parseNumber("quantity", body.quantity),
+      amount: parseNumber("amount", body.amount),
     };
 
-    if (request.quantity < MIN_PRICE || request.quantity > MAX_PRICE) {
-      throw new Error("Invalid amount");
+    if (request.amount < MIN_PRICE || request.amount > MAX_PRICE) {
+      return baseAPIResponses.failure({ response: "Invalid amount" });
     }
 
     const result = await useCase.execute(request);

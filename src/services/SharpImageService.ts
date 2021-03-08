@@ -76,7 +76,9 @@ export class SharpImageService implements ImageService {
     blur = 15
   ): Promise<Result<Buffer>> {
     try {
-      const borderImage = await sharp(Buffer.from(borderSVG)).png().toBuffer();
+      const borderImage = await this.sharpService(Buffer.from(borderSVG))
+        .png()
+        .toBuffer();
       const imageBlur = await this.sharpService(buffer)
         .blur(blur)
         .composite([

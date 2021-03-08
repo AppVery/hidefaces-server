@@ -1,8 +1,7 @@
 export type Request = {
   email: string;
-  token: string;
   extension: string;
-  quantity: number;
+  amount: number;
 };
 
 export type Response = {

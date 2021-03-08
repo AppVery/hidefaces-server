@@ -17,7 +17,7 @@ import { emailsContent } from "../../domain/content";
 type Data = {
   email: string;
   extension: string;
-  quantity: string;
+  amount: string;
 };
 
 export abstract class Notify implements UseCase<Request, Response> {
@@ -59,7 +59,7 @@ export abstract class Notify implements UseCase<Request, Response> {
       const data = {
         email: Item.email.S,
         extension: Item.extension.S,
-        quantity: Item.quantity.N,
+        amount: Item.amount.N,
       };
 
       return Result.ok<Data>(data);

@@ -15,6 +15,8 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Stripe from "stripe";
 
+type Session = Stripe.Response<Stripe.Checkout.Session>;
+
 export class Payment implements UseCase<Request, Response> {
   private database: DynamoDBClient;
   private s3: S3Client;
@@ -34,9 +36,9 @@ export class Payment implements UseCase<Request, Response> {
   }
 
   public async execute(request: Request): Promise<Result<Response>> {
-    const { email, token, extension, quantity } = request;
+    const { email, extension, amount } = request;
 
-    const resultMakePayment = await this.makePayment(token, quantity);
+    const resultMakePayment = await this.makePayment(amount);
 
     if (resultMakePayment.isFailure) {
       return Result.fail<Response>(
@@ -45,13 +47,14 @@ export class Payment implements UseCase<Request, Response> {
       );
     }
 
-    const id = resultMakePayment.value;
+    const session = resultMakePayment.value;
+    const id = session.id.split("_")[2];
 
     const resultSaveData = await this.saveOperation(
       id,
       email,
       extension,
-      quantity
+      amount
     );
 
     if (resultSaveData.isFailure) {
@@ -71,26 +74,38 @@ export class Payment implements UseCase<Request, Response> {
     }
 
     const response: Response = {
-      id,
+      id: session.id,
       url: resultTempUrl.value,
     };
 
     return Result.ok<Response>(response);
   }
 
-  private async makePayment(
-    token: string,
-    quantity: number
-  ): Promise<Result<string>> {
+  private async makePayment(amount: number): Promise<Result<Session>> {
     try {
-      const charge = await this.stripe.charges.create({
-        source: token,
-        amount: quantity,
-        description: "HideFaces.app",
-        currency: "eur",
+      const session = await this.stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "eur",
+              product_data: {
+                name: "HideFaces.app",
+              },
+              unit_amount: amount,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: "https://hidefaces.app/success",
+        cancel_url: "https://hidefaces.app/cancel",
       });
-      const id = charge.id.split("ch_")[1];
-      return Result.ok(id);
+
+      /* eslint-disable  no-console */
+      console.log("session", session);
+
+      return Result.ok(session);
     } catch (error) {
       const { statusCode, message } = error;
       return Result.fail(`Payment status: ${message}`, statusCode);
@@ -101,7 +116,7 @@ export class Payment implements UseCase<Request, Response> {
     id: string,
     email: string,
     extension: string,
-    quantity: number
+    amount: number
   ): Promise<Result<void>> {
     try {
       const input: PutItemCommandInput = {
@@ -110,7 +125,7 @@ export class Payment implements UseCase<Request, Response> {
           pk: { S: `PY-${id}` },
           email: { S: email },
           extension: { S: extension },
-          quantity: { N: quantity.toString() },
+          amount: { N: amount.toString() },
           createdAt: { S: Date.now().toString() },
         },
       };
