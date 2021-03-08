@@ -75,14 +75,12 @@ functions:
           method: post
           cors: true
   videoStateMachineTrigger:
-    handler: src/lambdas/videoUploaded.handler
+    handler: src/lambdas/webhook.handler
     events:
-      - s3:
-          bucket: ${self:custom.mainBucketName}
-          event: s3:ObjectCreated:Put
-          rules:
-            - prefix: videos/source/
-          existing: true
+      - http:
+          path: webhook
+          method: post
+          cors: true
   checkVideoSource:
     handler: src/lambdas/SMHideFacesOnVideo/checkVideoSource.handler
     memorySize: 1792

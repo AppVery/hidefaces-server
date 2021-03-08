@@ -48,7 +48,7 @@ export class Payment implements UseCase<Request, Response> {
     }
 
     const session = resultGetPaySession.value;
-    const id = session.id.split("_")[2];
+    const id = session.payment_intent.toString().split("_")[1];
 
     const resultSaveData = await this.saveOperation(
       id,
