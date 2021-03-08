@@ -17,7 +17,6 @@ custom:
       - chokidar
       - fluent-ffmpeg
     exclude:
-      - "@aws-sdk"
       - sharp
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:service}-${self:custom.stage}
