@@ -1,4 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { Request } from "../useCases/checkVideoSource/requestResponseDTO";
 import baseAPIResponses from "../utils/baseApiResponses";
 import { StepFunctions } from "aws-sdk";
 import Stripe from "stripe";
@@ -19,7 +20,7 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const signature = event.headers["Stripe-Signature"];
+    const signature = event.headers["Stripe-Signature"] || "";
     const endpointSecret = process.env.STRIPE_SECRET_WEBHOOK || "";
     const stripeEvent = stripe.webhooks.constructEvent(
       event.body,
@@ -28,9 +29,13 @@ export const handler = async (
     );
 
     if ("checkout.session.completed" === stripeEvent.type) {
-      const session = stripeEvent.data.object as { payment_intent: string };
-      const data = {
+      const session = stripeEvent.data.object as {
+        payment_intent: string;
+        metadata: { extension: string };
+      };
+      const data: Request = {
         id: session.payment_intent.split("_")[1],
+        extension: session.metadata.extension,
       };
       const params = {
         stateMachineArn: process.env.STATE_MACHINE_ARN,

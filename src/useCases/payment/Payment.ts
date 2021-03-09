@@ -38,7 +38,12 @@ export class Payment implements UseCase<Request, Response> {
   public async execute(request: Request): Promise<Result<Response>> {
     const { email, extension, amount, origin } = request;
 
-    const resultGetPaySession = await this.getPaySession(email, amount, origin);
+    const resultGetPaySession = await this.getPaySession(
+      email,
+      amount,
+      origin,
+      extension
+    );
 
     if (resultGetPaySession.isFailure) {
       return Result.fail<Response>(
@@ -84,7 +89,8 @@ export class Payment implements UseCase<Request, Response> {
   private async getPaySession(
     email: string,
     amount: number,
-    origin: string
+    origin: string,
+    extension: string
   ): Promise<Result<Session>> {
     try {
       const session = await this.stripe.checkout.sessions.create({
@@ -103,6 +109,7 @@ export class Payment implements UseCase<Request, Response> {
           },
         ],
         mode: "payment",
+        metadata: { extension },
         success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/cancel?session_id={CHECKOUT_SESSION_ID}`,
       });

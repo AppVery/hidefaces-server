@@ -27,8 +27,10 @@ export class CheckVideoSource implements UseCase<Request, Response> {
   }
 
   public async execute(request: Request): Promise<Result<Response>> {
-    const { id, filename, s3key } = request;
+    const { id, extension } = request;
 
+    const filename = `${id}.${extension}`;
+    const s3key = getFilePaths.s3SourceVideo(id, extension);
     const resultVideoData = await this.getVideoMetadata(id, filename, s3key);
 
     if (resultVideoData.isFailure) {
