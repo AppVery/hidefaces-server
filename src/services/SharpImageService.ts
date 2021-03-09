@@ -1,9 +1,11 @@
 import { ImageService, Position } from "../domain/interfaces/imageService";
 import { Result } from "../domain/Result";
-import * as sharp from "sharp";
+import * as sharpTypes from "sharp";
 import { Metadata } from "sharp";
 
-export type Composite = sharp.OverlayOptions[];
+const sharp = require("sharp");
+
+export type Composite = sharpTypes.OverlayOptions[];
 
 export class SharpImageService implements ImageService {
   private sharpService = sharp;
