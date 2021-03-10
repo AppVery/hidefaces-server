@@ -67,11 +67,11 @@ provider:
     - ${file(resources/common.yml):lambdaPolicyXRay}
 
 functions:
-  payment:
-    handler: src/lambdas/payment.handler
+  check:
+    handler: src/lambdas/check.handler
     events:
       - http:
-          path: payment
+          path: check
           method: post
           cors: true
   videoStateMachineTrigger:

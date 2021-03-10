@@ -17,7 +17,7 @@ import Stripe from "stripe";
 
 type Session = Stripe.Response<Stripe.Checkout.Session>;
 
-export class Payment implements UseCase<Request, Response> {
+export class Check implements UseCase<Request, Response> {
   private database: DynamoDBClient;
   private s3: S3Client;
   private getTempUrl: typeof getSignedUrl;
@@ -110,12 +110,9 @@ export class Payment implements UseCase<Request, Response> {
         ],
         mode: "payment",
         metadata: { extension },
-        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/cancel?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${origin}/success?id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/cancel?id={CHECKOUT_SESSION_ID}`,
       });
-
-      /* eslint-disable  no-console */
-      console.log("session", session);
 
       return Result.ok(session);
     } catch (error) {
@@ -159,7 +156,7 @@ export class Payment implements UseCase<Request, Response> {
         Key: getFilePaths.s3SourceVideo(id, extension),
       };
       const url = await this.getTempUrl(this.s3, new PutObjectCommand(input), {
-        expiresIn: 120,
+        expiresIn: 180,
       });
       return Result.ok<string>(url);
     } catch (error) {

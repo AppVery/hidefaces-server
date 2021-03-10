@@ -1,5 +1,5 @@
-import useCase from "../useCases/payment";
-import { Request } from "../useCases/payment/requestResponseDTO";
+import useCase from "../useCases/check";
+import { Request } from "../useCases/check/requestResponseDTO";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import baseAPIResponses from "../utils/baseApiResponses";
 import {
