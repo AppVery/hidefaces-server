@@ -14,6 +14,7 @@ custom:
   esbuild:
     target: node12
     exclude:
+      - fluent-ffmpeg
       - sharp
   stage: ${opt:stage, self:provider.stage}
   prefix: ${self:service}-${self:custom.stage}
@@ -33,6 +34,12 @@ custom:
       - - "arn:aws:lambda:eu-west-1"
         - !Ref AWS::AccountId
         - "layer:ffmpeg:1"
+  fluent-ffmpegLayer:
+    Fn::Join:
+      - ":"
+      - - "arn:aws:lambda:eu-west-1"
+        - !Ref AWS::AccountId
+        - "layer:custom-fluent-ffmpeg:1"
   sharpLayer:
     Fn::Join:
       - ":"
@@ -87,12 +94,14 @@ functions:
     timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
+      - ${self:custom.fluent-ffmpegLayer}
   explodeVideo:
     handler: src/lambdas/SMHideFacesOnVideo/explodeVideo.handler
     memorySize: 1792
     timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
+      - ${self:custom.fluent-ffmpegLayer}
   getFacesData:
     handler: src/lambdas/SMHideFacesOnVideo/getFacesData.handler
     timeout: 500
@@ -114,6 +123,7 @@ functions:
     timeout: 500
     layers:
       - ${self:custom.ffmpegLayer}
+      - ${self:custom.fluent-ffmpegLayer}
   notifySuccess:
     handler: src/lambdas/SMHideFacesOnVideo/notifySuccess.handler
   notifyError:
