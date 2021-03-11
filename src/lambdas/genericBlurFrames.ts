@@ -8,7 +8,7 @@ type Event = {
     Payload: {
       id: string;
       videoData: VideoData;
-      framesData: string;
+      facesPositionsJSON: string;
     };
   };
 };
@@ -18,21 +18,16 @@ export const getGenericBlurFrames = <Response>(
   index: number
 ) => {
   return async (event: Event): Promise<Response> => {
-    const { videoData, framesData } = event.Input.Payload;
+    const { videoData, facesPositionsJSON } = event.Input.Payload;
 
-    const data = JSON.parse(framesData);
-    const mapper: Map<number, number> = new Map(data.mapper);
-    const facesPositions: Map<number, Position[]> = new Map(
-      data.facesPositions
-    );
+    const data = JSON.parse(facesPositionsJSON);
+
+    const facesPositionsMap: Map<number, Position[]> = new Map(data);
 
     const request: Request = {
       index,
       videoData,
-      framesData: {
-        mapper,
-        facesPositions,
-      },
+      facesPositions: facesPositionsMap,
     };
 
     const result = await useCase.execute(request);

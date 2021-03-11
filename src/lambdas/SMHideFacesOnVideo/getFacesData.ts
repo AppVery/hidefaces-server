@@ -5,7 +5,7 @@ import { VideoData } from "../../domain/interfaces/types";
 type Response = {
   id: string;
   videoData: VideoData;
-  framesData: string;
+  facesPositionsJSON: string;
 };
 
 export const handler = getGenericHandler<Response>(getFacesData);

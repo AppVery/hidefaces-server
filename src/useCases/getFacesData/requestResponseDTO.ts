@@ -7,5 +7,5 @@ export type Request = {
 export type Response = {
   id: string;
   videoData: VideoData;
-  framesData: string;
+  facesPositionsJSON: string;
 };

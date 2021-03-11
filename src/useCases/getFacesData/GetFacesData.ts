@@ -6,11 +6,12 @@ import { Result } from "../../domain/Result";
 import { UseCase } from "../../domain/useCase";
 import getFilePaths from "../../utils/getFilePaths";
 import { FaceDetail, BoundingBox } from "@aws-sdk/client-rekognition";
+import config from "../../domain/config";
 
 export class GetFacesData implements UseCase<Request, Response> {
   private bucketName = process.env.MAIN_BUCKET_NAME;
   private iaService: RekognitionService;
-  private INTERVAL = 5;
+  private INTERVAL = config.INTERVAL;
 
   constructor(iaService: RekognitionService) {
     this.iaService = iaService;
@@ -29,14 +30,13 @@ export class GetFacesData implements UseCase<Request, Response> {
       facesData
     );
 
-    const mapper = this.getMapper(videoData.totalFrames, facesPositions);
+    const facesPositionsJSON: string = JSON.stringify([...facesPositions]);
 
-    const framesData: string = JSON.stringify({
-      facesPositions: [...facesPositions],
-      mapper: [...mapper],
-    });
-
-    const response: Response = { id: videoData.id, videoData, framesData };
+    const response: Response = {
+      id: videoData.id,
+      videoData,
+      facesPositionsJSON,
+    };
 
     return Result.ok<Response>(response);
   }
@@ -147,33 +147,11 @@ export class GetFacesData implements UseCase<Request, Response> {
     return facesPositions;
   }
 
-  private getMapper(
-    totalFrames: number,
-    facesPositions: Map<number, Position[]>
-  ): Map<number, number> {
-    const mapper = new Map<number, number>();
-    let frameWithData = 1;
-
-    for (let i = 1; i <= totalFrames; i++) {
-      if (i >= frameWithData + this.INTERVAL / 2) {
-        frameWithData = frameWithData + this.INTERVAL;
-      }
-
-      const frameToMap = facesPositions.has(frameWithData)
-        ? frameWithData
-        : frameWithData - this.INTERVAL;
-
-      mapper.set(i, frameToMap);
-    }
-
-    return mapper;
-  }
-
   private getFacesPositions(
     videoData: VideoData,
     BoundingBox: BoundingBox
   ): Position {
-    const INC_FACES_BOX = 1.8;
+    const INC_FACES_BOX = config.INC_FACES_BOX;
     const frameWidth = videoData.width;
     const frameHeight = videoData.height;
     const { Top, Left, Width, Height } = BoundingBox; //percentages of total sizes
@@ -226,8 +204,8 @@ export class GetFacesData implements UseCase<Request, Response> {
 
     //check if quick movement >10% is detect
     const check =
-      Math.abs(currentMin - beforeMin) > 10 ||
-      Math.abs(currentMax - beforeMax) > 10;
+      Math.abs(currentMin - beforeMin) > config.QUICK_MOVEMENT ||
+      Math.abs(currentMax - beforeMax) > config.QUICK_MOVEMENT;
 
     if (check) {
       /* eslint-disable  no-console */
