@@ -108,6 +108,48 @@ States:
                       Payload:
                         Input.$: "$"
                     End: true
+              - StartAt: blurAllFrames3
+                States:
+                  blurAllFrames3:
+                    Type: Task
+                    Resource: arn:aws:states:::lambda:invoke
+                    Parameters:
+                      FunctionName:
+                        {
+                          "Fn::Join":
+                            [
+                              ":",
+                              [
+                                "arn:aws:lambda:eu-west-1",
+                                { "Ref": "AWS::AccountId" },
+                                "function:${self:service}-${self:custom.stage}-blurAllFrames3",
+                              ],
+                            ],
+                        }
+                      Payload:
+                        Input.$: "$"
+                    End: true
+              - StartAt: blurAllFrames4
+                States:
+                  blurAllFrames4:
+                    Type: Task
+                    Resource: arn:aws:states:::lambda:invoke
+                    Parameters:
+                      FunctionName:
+                        {
+                          "Fn::Join":
+                            [
+                              ":",
+                              [
+                                "arn:aws:lambda:eu-west-1",
+                                { "Ref": "AWS::AccountId" },
+                                "function:${self:service}-${self:custom.stage}-blurAllFrames4",
+                              ],
+                            ],
+                        }
+                      Payload:
+                        Input.$: "$"
+                    End: true
             Next: makeNewVideo
           makeNewVideo:
             Type: Task

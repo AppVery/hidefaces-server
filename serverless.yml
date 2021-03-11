@@ -117,6 +117,18 @@ functions:
     timeout: 900
     layers:
       - ${self:custom.sharpLayer}
+  blurAllFrames3:
+    handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames3.handler
+    memorySize: 3008
+    timeout: 900
+    layers:
+      - ${self:custom.sharpLayer}
+  blurAllFrames4:
+    handler: src/lambdas/SMHideFacesOnVideo/blurAllFrames4.handler
+    memorySize: 3008
+    timeout: 900
+    layers:
+      - ${self:custom.sharpLayer}
   makeNewVideo:
     handler: src/lambdas/SMHideFacesOnVideo/makeNewVideo.handler
     memorySize: 1792

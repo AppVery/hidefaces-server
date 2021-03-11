@@ -6,17 +6,36 @@ import { Operations } from "../../domain/interfaces/operations";
 import { Result } from "../../domain/Result";
 import { UseCase } from "../../domain/useCase";
 import getFilePaths from "../../utils/getFilePaths";
-import config from "../../domain/config";
 
 export class BlurAllFrames implements UseCase<Request, Response> {
   private bucketName = process.env.MAIN_BUCKET_NAME;
   private fileService: FileService;
   private operation: Operations;
-  private INTERVAL = config.INTERVAL;
 
   constructor(fileService: FileService, operation: Operations) {
     this.fileService = fileService;
     this.operation = operation;
+  }
+
+  private getInitLastFrame(index: number, totalFrames: number): number[] {
+    const slice = Math.floor(totalFrames / 4);
+
+    switch (index) {
+      case 1:
+        return [1, slice];
+
+      case 2:
+        return [slice + 1, slice * 2];
+
+      case 3:
+        return [slice * 2 + 1, slice * 3];
+
+      case 4:
+        return [slice * 3 + 1, totalFrames];
+
+      default:
+        return [1, totalFrames];
+    }
   }
 
   public async execute(request: Request): Promise<Result<Response>> {
@@ -35,15 +54,16 @@ export class BlurAllFrames implements UseCase<Request, Response> {
       );
     }
 
+    const [initFrame, lastFrame] = this.getInitLastFrame(
+      index,
+      videoData.totalFrames
+    );
+
     const data = JSON.parse(Buffer.from(resultFramesData.value).toString());
     const mapper: Map<number, number> = new Map(data.mapper);
     const facesPositions: Map<number, Position[]> = new Map(
       data.facesPositions
     );
-
-    const middleFrame = Math.floor(videoData.totalFrames / 2);
-    const initFrame = 1 === index ? 1 : middleFrame + 1;
-    const lastFrame = 1 === index ? middleFrame : videoData.totalFrames;
 
     for (let i = initFrame; i <= lastFrame; i++) {
       const frameWithData = mapper.get(i);
