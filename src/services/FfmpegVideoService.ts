@@ -1,6 +1,7 @@
 import { VideoService } from "../domain/interfaces/videoService";
 import { Readable } from "stream";
 
+/* eslint-disable  @typescript-eslint/no-var-requires */
 const ffmpeg = require("fluent-ffmpeg");
 
 export class FfmpegVideoService implements VideoService {

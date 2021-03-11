@@ -3,6 +3,7 @@ import { Result } from "../domain/Result";
 import * as sharpTypes from "sharp";
 import { Metadata } from "sharp";
 
+/* eslint-disable  @typescript-eslint/no-var-requires */
 const sharp = require("sharp");
 
 export type Composite = sharpTypes.OverlayOptions[];

@@ -81,6 +81,28 @@ export class GeneralFileService implements FileService {
     }
   }
 
+  public async saveStringData(
+    bucketName: string,
+    key: string,
+    data: string
+  ): Promise<Result<void>> {
+    const command: PutObjectCommandInput = {
+      Bucket: bucketName,
+      Key: key,
+      Body: data,
+    };
+    const awsResult = await resultTryAWSSendCommand<PutObjectCommandOutput>(
+      this.s3,
+      new PutObjectCommand(command)
+    );
+
+    if (awsResult.isFailure) {
+      return Result.continueFail<void>(awsResult);
+    }
+
+    return Result.ok<void>();
+  }
+
   public async saveBuffer(
     bucketName: string,
     key: string,

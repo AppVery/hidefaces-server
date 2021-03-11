@@ -1,6 +1,7 @@
 import { Request, Response } from "./requestResponseDTO";
 import { Position } from "../../domain/interfaces/imageService";
 import { RekognitionService } from "../../domain/interfaces/rekognitionService";
+import { FileService } from "../../domain/interfaces/fileService";
 import { VideoData } from "../../domain/interfaces/types";
 import { Result } from "../../domain/Result";
 import { UseCase } from "../../domain/useCase";
@@ -11,10 +12,12 @@ import config from "../../domain/config";
 export class GetFacesData implements UseCase<Request, Response> {
   private bucketName = process.env.MAIN_BUCKET_NAME;
   private iaService: RekognitionService;
+  private fileService: FileService;
   private INTERVAL = config.INTERVAL;
 
-  constructor(iaService: RekognitionService) {
+  constructor(iaService: RekognitionService, fileService: FileService) {
     this.iaService = iaService;
+    this.fileService = fileService;
   }
 
   public async execute(request: Request): Promise<Result<Response>> {
@@ -30,15 +33,45 @@ export class GetFacesData implements UseCase<Request, Response> {
       facesData
     );
 
-    const facesPositionsJSON: string = JSON.stringify([...facesPositions]);
+    const mapper = this.getMapper(videoData.totalFrames, facesPositions);
+
+    const resultSaveData = await this.saveFacesDataOnS3(
+      videoData.id,
+      facesPositions,
+      mapper
+    );
+
+    if (resultSaveData.isFailure) {
+      return Result.combineFail(
+        resultSaveData,
+        "[GetFacesData: saving data on S3]"
+      );
+    }
 
     const response: Response = {
       id: videoData.id,
       videoData,
-      facesPositionsJSON,
     };
 
     return Result.ok<Response>(response);
+  }
+
+  private async saveFacesDataOnS3(
+    id: string,
+    facesPositions: Map<number, Position[]>,
+    mapper: Map<number, number>
+  ): Promise<Result<void>> {
+    const s3key = getFilePaths.s3FacesData(id);
+    const framesData = JSON.stringify({
+      facesPositions: [...facesPositions],
+      mapper: [...mapper],
+    });
+
+    return await this.fileService.saveStringData(
+      this.bucketName,
+      s3key,
+      framesData
+    );
   }
 
   private async analyzeFacesData(
@@ -234,5 +267,27 @@ export class GetFacesData implements UseCase<Request, Response> {
 
   private getPitagorasVector(x: number, y: number): number {
     return Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
+  }
+
+  private getMapper(
+    totalFrames: number,
+    facesPositions: Map<number, Position[]>
+  ): Map<number, number> {
+    const mapper = new Map<number, number>();
+    let frameWithData = 1;
+
+    for (let i = 1; i <= totalFrames; i++) {
+      if (i >= frameWithData + this.INTERVAL / 2) {
+        frameWithData = frameWithData + this.INTERVAL;
+      }
+
+      const frameToMap = facesPositions.has(frameWithData)
+        ? frameWithData
+        : frameWithData - this.INTERVAL;
+
+      mapper.set(i, frameToMap);
+    }
+
+    return mapper;
   }
 }

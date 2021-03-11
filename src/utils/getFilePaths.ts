@@ -5,6 +5,10 @@ const S3_VIDEO_TEMPORAL = "videos/temporal";
 const S3_VIDEO_FINAL = "videos/final";
 const LOCAL_TMP = "/tmp";
 
+const s3FacesData = (id: string): string => {
+  return `${S3_VIDEO_TEMPORAL}/${id}/faces-data.json`;
+};
+
 const s3SourceVideo = (id: string, extension: string): string => {
   return `${S3_VIDEO_SOURCE}/${id}/${id}.${extension}`;
 };
@@ -51,6 +55,7 @@ export const makeCleanTemporalFolder = async (id: string): Promise<void> => {
 };
 
 export default {
+  s3FacesData,
   s3SourceVideo,
   s3TmpVideo,
   s3TmpAudio,

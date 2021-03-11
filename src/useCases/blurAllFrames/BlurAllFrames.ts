@@ -20,9 +20,26 @@ export class BlurAllFrames implements UseCase<Request, Response> {
   }
 
   public async execute(request: Request): Promise<Result<Response>> {
-    const { index, videoData, facesPositions } = request;
+    const { index, videoData } = request;
 
-    const mapper = this.getMapper(videoData.totalFrames, facesPositions);
+    const s3key = getFilePaths.s3FacesData(videoData.id);
+    const resultFramesData = await this.fileService.getS3Buffer(
+      this.bucketName,
+      s3key
+    );
+
+    if (resultFramesData.isFailure) {
+      return Result.combineFail(
+        resultFramesData,
+        "[BlurAllframes: getting data from S3]"
+      );
+    }
+
+    const data = JSON.parse(Buffer.from(resultFramesData.value).toString());
+    const mapper: Map<number, number> = new Map(data.mapper);
+    const facesPositions: Map<number, Position[]> = new Map(
+      data.facesPositions
+    );
 
     const middleFrame = Math.floor(videoData.totalFrames / 2);
     const initFrame = 1 === index ? 1 : middleFrame + 1;
@@ -59,27 +76,5 @@ export class BlurAllFrames implements UseCase<Request, Response> {
     }
 
     return Result.ok<VideoData>(videoData);
-  }
-
-  private getMapper(
-    totalFrames: number,
-    facesPositions: Map<number, Position[]>
-  ): Map<number, number> {
-    const mapper = new Map<number, number>();
-    let frameWithData = 1;
-
-    for (let i = 1; i <= totalFrames; i++) {
-      if (i >= frameWithData + this.INTERVAL / 2) {
-        frameWithData = frameWithData + this.INTERVAL;
-      }
-
-      const frameToMap = facesPositions.has(frameWithData)
-        ? frameWithData
-        : frameWithData - this.INTERVAL;
-
-      mapper.set(i, frameToMap);
-    }
-
-    return mapper;
   }
 }
